@@ -1,0 +1,82 @@
+##########################################################
+dashboardPage(
+  dashboardHeader(title = "大额人群流量监控",titleWidth = 220),
+  dashboardSidebar(
+    sidebarMenu(
+    menuItem(iconv("大额人群画像",to="UTF-8"), tabName = "huaxiang", icon = icon("dashboard")),
+    radioButtons(inputId = "choose_type", label = "请选择一个维度：",selected=1,choiceNames=c("1（东->西 或 北->南）","2（西->东 或 南->北）"),choiceValues=1:2),
+    #radioButtons(inputId = "rank_class", label = "请选择道路排名类别：",selected="拥堵排名",choices=c("拥堵排名","通畅排名")),
+    numericInput(inputId = "rank_num",label = "请输入道路交通排名数量：",min = 5,max = 100,step = 1,value=20),
+    menuItem(iconv("道路画像分析",to="UTF-8"), icon = icon("area-chart"), tabName = "statistics"),
+    selectInput(inputId = "choose_road",label = "请选择一条道路：",choices = all_roads),
+    radioButtons(inputId = "choose_direction2", label = "请选择一个方向：",selected=1,choiceNames=c("1（东->西 或 北->南）","2（西->东 或 南->北）"),choiceValues=1:2),
+    menuItem(iconv("历史路况回顾",to="UTF-8"), icon = icon("calendar"), tabName = "history"),
+    dateInput(inputId = "choose_date", label = "请选择4月的一天：",value = "2017-04-01",min = "2017-04-01",max = "2017-04-30"),
+    radioButtons(inputId = "choose_direction3", label = "请选择一个方向：",selected="东->西",choices=c("东->西","西->东","北->南","南->北")),
+    radioButtons(inputId = "rank_class2", label = "请选择道路排名类别：",selected="拥堵排名",choices=c("拥堵排名","通畅排名")),
+    numericInput(inputId = "rank_num2",label = "请输入道路交通排名数量：",min = 5,max = 100,step = 1,value=20),
+    menuItem(iconv("实时数据下载",to="UTF-8"),tabName = "data_download",icon = icon("database"))
+ ),width = 220),
+  dashboardBody(
+    tags$head(
+      tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")),
+    tabItems(
+      tabItem("realtime_traffic",
+              fluidRow(
+                box(ggiraphOutput("map"),width = 12,solidHeader = T,collapsible = T)
+              ),
+              fluidRow(
+                box(ggiraphOutput("rank1"),width = 6,solidHeader = T,collapsible = T),
+                box(ggiraphOutput("rank2"),width = 6,solidHeader = T,collapsible = T)
+              ),
+              fluidRow(
+                box(ggiraphOutput("rank3"),width = 6,solidHeader = T,collapsible = T),
+                box(ggiraphOutput("rank4"),width = 6,solidHeader = T,collapsible = T)
+              )
+      ),
+      tabItem("statistics",
+              fluidRow(
+                box(dygraphOutput("ts_history"),width = 12,solidHeader = T,collapsible = T)
+                ),
+              fluidRow(
+                box(ggiraphOutput("heat"),width = 12,solidHeader = T,collapsible = T)
+              ),
+              fluidRow(
+                box(ggiraphOutput("polar_weekdays"),width = 6,solidHeader = T,collapsible = T),
+                box(ggiraphOutput("polar_holidays"),width = 6,solidHeader = T,collapsible = T)
+              )
+              ),
+      tabItem("history",
+              # fluidRow(
+              #   box(img(src="https://ss1.bdstatic.com/70cFvXSh_Q1YnxGkpoWK1HF6hhy/it/u=3245526806,2208748886&fm=21&gp=0.jpg"),width = 12,solidHeader = T)
+              # )),
+              fluidRow(
+                box(ggiraphOutput("history_bars"),width = 12,solidHeader = T,collapsible = T)
+              ),
+              fluidRow(
+                box(ggiraphOutput("day_rank"),width = 12,solidHeader = T,collapsible = T)
+              )),
+      tabItem("data_download",
+              fluidRow(
+              box(
+                dataTableOutput("rawdata"),width = 12
+              )
+              ),
+              fluidRow(
+                p("数据来源：",strong(a("深圳市交通运输委员会",href="http://sztocc.sztb.gov.cn/roadcongmore.aspx")))
+              ),
+              downloadButton("downloadCsv", "下载实时数据")
+              )
+      )
+      ))
+###############################
+traffic_choosen = reactive(traffic[traffic$direction_id == input$choose_direction, 1: 7])
+roads_map < - reactive({
+    roads_map < - join(roads, traffic_choosen(), type="inner")
+    roads_map
+})
+
+作者：真依然很拉风
+链接：https://www.jianshu.com/p/9983b8113470
+來源：简书
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。

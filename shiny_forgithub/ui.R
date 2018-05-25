@@ -1,0 +1,232 @@
+options(shiny.sanitize.errors = FALSE)
+library(shiny)
+#library(praise)
+
+library(shinydashboard)
+library(rCharts)
+####
+basic=read.table("basicinfo.txt",header = TRUE,sep="",fileEncoding="UTF-8") ###正确
+basic$firstchuo=as.character(basic$firstchuo)
+
+model=read.table("model.txt",header = TRUE,sep="",fileEncoding="UTF-8") ###正确
+model$firstchuo=as.character(model$firstchuo)
+
+salary=read.table("salary.txt",header = TRUE,sep="",fileEncoding="UTF-8") ###正确
+salary$firstchuo=as.character(salary$firstchuo)
+
+zizhi=read.table("zizhi.txt",header = TRUE,sep="",fileEncoding="UTF-8") ###正确
+zizhi$firstchuo=as.character(zizhi$firstchuo)
+
+owing=read.table("owing.txt",header = TRUE,sep="",fileEncoding="UTF-8") ###正确
+owing$firstchuo=as.character(owing$firstchuo)
+
+duotou=read.table("duotou.txt",header = TRUE,sep="",fileEncoding="UTF-8") ###正确
+duotou$firstchuo=as.character(duotou$firstchuo)
+####
+dashboardPage(
+ dashboardHeader(title="流量监控"),##标题
+ dashboardSidebar(
+    #selectInput("xcol","X Variable",names(iris)),
+    #selectInput("ycol","Y Variable",names(iris),selected="Sepal.Width"),
+    #numericInput("clusters","Cluster count",3,min=2,max=9),
+    #a(img(src="logo.png",height=60,width=200),
+    #href="https://www.hellobi.com/event/137",target="black")
+     sidebarMenu(
+        menuItem("大额基本数据", tabName = "大额基本数据", icon = icon("dashboard")),
+
+        menuItem("人群画像", tabName = "人群画像", icon = icon("dashboard"),startExpanded = TRUE,
+        menuSubItem("基本信息", tabName = "基本信息"),
+        menuSubItem("模型类评分", tabName = "模型类评分"),
+        menuSubItem("收入", tabName = "收入"),
+        menuSubItem("用户资质", tabName = "用户资质"),
+        menuSubItem("用户负债", tabName = "用户负债"),        
+        menuSubItem("多头", tabName = "多头")
+        #menuSubItem("不良", tabName = "不良")
+        ),
+      
+        menuItem("渠道质量监控", tabName = "渠道质量监控", icon = icon("dashboard"))
+    )
+),
+ dashboardBody(
+tabItems(
+      tabItem("大额基本数据", 
+        fluidRow(
+          box(
+            dateRangeInput("dates", label = h3("Date range"))
+            #hr(),
+            #fluidRow(column(4, verbatimTextOutput("value")))            
+            #h3(print(praise())),
+            #h4("通过对各维度的不同取值赋权,形成该维度下的得分,最终以左图形式呈现")
+          )
+        )
+       ),
+      tabItem("基本信息", 
+        fluidRow(
+          box(dateRangeInput("dates2", "Select the date range:",
+               start = "2018-04-24",               
+               end = as.character(format(as.Date(max(basic$firstchuo))),"yyyy-mm-dd"),
+               min = "2018-04-24",               
+               max = as.character(format(as.Date(max(basic$firstchuo))),"yyyy-mm-dd"),
+               format = "yyyy-mm-dd"),
+              hr(),
+              h3("筛选时间,查看不同时间段内的各维度信息。"),
+              hr()
+              #h4(print(praise()))
+               ),
+        
+          box(showOutput("plot10","highcharts")),
+          box(showOutput("plot1","highcharts")),
+          box(showOutput("plot4","highcharts")),
+          box(showOutput("plot7","highcharts")),   
+          box(showOutput("plot11","highcharts")),
+          box(showOutput("plot12","highcharts")),   
+          box(showOutput("plot2","highcharts")),
+          box(showOutput("plot3","highcharts")),   
+          box(showOutput("plot5","highcharts")),   
+          box(showOutput("plot6","highcharts")),
+          box(showOutput("plot8","highcharts")),   
+          box(showOutput("plot9","highcharts"))   
+          
+        
+        )
+      
+      
+      ),
+      tabItem("模型类评分",
+        fluidRow(
+          box(dateRangeInput("dates3", "Select the date range:",
+               start = "2018-04-24",               
+               end = as.character(format(as.Date(max(model$firstchuo))),"yyyy-mm-dd"),
+               min = "2018-04-24",               
+               max = as.character(format(as.Date(max(model$firstchuo))),"yyyy-mm-dd"),
+               format = "yyyy-mm-dd"),
+              hr(),
+              h3("筛选时间,查看不同时间段内的各维度信息。"),
+              hr()
+              #h4(print(praise()))
+               ),
+          box(showOutput("plot13","highcharts")),
+          box(showOutput("plot16","highcharts")),
+          box(showOutput("plot19","highcharts")),
+          box(showOutput("plot22","highcharts")),
+          box(showOutput("plot14","highcharts")),
+          box(showOutput("plot15","highcharts")),   
+          box(showOutput("plot17","highcharts")),
+          box(showOutput("plot18","highcharts")),  
+          box(showOutput("plot20","highcharts")),
+          box(showOutput("plot21","highcharts")),   
+          box(showOutput("plot23","highcharts")),
+          box(showOutput("plot24","highcharts"))  
+        )
+      ),
+      tabItem("收入", 
+        fluidRow(
+          box(dateRangeInput("dates4", "Select the date range:",
+               start = "2018-04-24",               
+               end = as.character(format(as.Date(max(salary$firstchuo))),"yyyy-mm-dd"),
+               min = "2018-04-24",               
+               max = as.character(format(as.Date(max(salary$firstchuo))),"yyyy-mm-dd"),
+               format = "yyyy-mm-dd"),
+              hr(),
+              h3("筛选时间,查看不同时间段内的各维度信息。"),
+              hr()
+              #h4(print(praise()))
+               ),
+          box(showOutput("plot25","highcharts")),
+          box(showOutput("plot26","highcharts")),
+          box(showOutput("plot27","highcharts"))
+        )
+      
+      
+      
+      ), 
+      tabItem("用户资质", 
+        fluidRow(
+          box(dateRangeInput("dates6", "Select the date range:",
+               start = "2018-04-24",               
+               end = as.character(format(as.Date(max(zizhi$firstchuo))),"yyyy-mm-dd"),
+               min = "2018-04-24",               
+               max = as.character(format(as.Date(max(zizhi$firstchuo))),"yyyy-mm-dd"),
+               format = "yyyy-mm-dd"),
+              hr(),
+              h3("筛选时间,查看不同时间段内的各维度信息。"),
+              hr()
+              #h4(print(praise()))
+               ),
+          box(showOutput("plot43","highcharts")),
+          box(showOutput("plot46","highcharts")),
+          box(showOutput("plot49","highcharts")),   
+          box(showOutput("plot44","highcharts")),
+          box(showOutput("plot45","highcharts")),
+          box(showOutput("plot47","highcharts")),  
+          box(showOutput("plot48","highcharts")),
+          box(showOutput("plot50","highcharts")),
+          box(showOutput("plot51","highcharts"))  
+        )
+      ),
+      tabItem("用户负债", 
+        fluidRow(
+          box(dateRangeInput("dates7", "Select the date range:",
+               start = "2018-04-24",               
+               end = as.character(format(as.Date(max(owing$firstchuo))),"yyyy-mm-dd"),
+               min = "2018-04-24",               
+               max = as.character(format(as.Date(max(owing$firstchuo))),"yyyy-mm-dd"),
+               format = "yyyy-mm-dd"),
+              hr(),
+              h3("筛选时间,查看不同时间段内的各维度信息。"),
+              hr()
+              #h4(print(praise()))
+               ),
+          box(showOutput("plot52","highcharts")),
+          box(showOutput("plot55","highcharts")),
+          box(showOutput("plot58","highcharts")),   
+          box(showOutput("plot53","highcharts")),
+          box(showOutput("plot54","highcharts")),
+          box(showOutput("plot56","highcharts")),  
+          box(showOutput("plot57","highcharts")),
+          box(showOutput("plot59","highcharts")),
+          box(showOutput("plot60","highcharts"))  
+      
+        )
+      ),
+      tabItem("多头", 
+        fluidRow(
+          box(dateRangeInput("dates5", "Select the date range:",
+               start = "2018-04-24",               
+               end = as.character(format(as.Date(max(duotou$firstchuo))),"yyyy-mm-dd"),
+               min = "2018-04-24",               
+               max = as.character(format(as.Date(max(duotou$firstchuo))),"yyyy-mm-dd"),
+               format = "yyyy-mm-dd"),
+              hr(),
+              h3("筛选时间,查看不同时间段内的各维度信息。"),
+              hr()
+              #h4(print(praise()))
+               ),
+          box(showOutput("plot28","highcharts")),
+          box(showOutput("plot31","highcharts")),
+          box(showOutput("plot34","highcharts")),   
+          box(showOutput("plot37","highcharts")),
+          box(showOutput("plot40","highcharts")),
+          box(showOutput("plot29","highcharts")),  
+          box(showOutput("plot30","highcharts")),
+          box(showOutput("plot32","highcharts")),
+          box(showOutput("plot33","highcharts")),   
+          box(showOutput("plot35","highcharts")),
+          box(showOutput("plot36","highcharts")),
+          box(showOutput("plot38","highcharts")),          
+          box(showOutput("plot39","highcharts")),          
+          box(showOutput("plot41","highcharts")),          
+          box(showOutput("plot42","highcharts"))         
+        
+        
+        
+        )
+      
+      
+      ), 
+      tabItem("渠道质量监控", "渠道质量监控 tab content")
+      
+
+  )
+ )
+)
