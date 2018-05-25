@@ -44,7 +44,7 @@ duotou$firstchuo=as.character(duotou$firstchuo)
 ##################基本信息
 
   selectedData1 <- reactive({
-  basicinfo[as.Date(basicinfo$firstchuo) >= min(input$dates2) & as.Date(basicinfo$firstchuo) <= max(input$dates2),]
+  basic[as.Date(basic$firstchuo) >= min(input$dates2) & as.Date(basic$firstchuo) <= max(input$dates2),]
   })
   
 ####学历分布
