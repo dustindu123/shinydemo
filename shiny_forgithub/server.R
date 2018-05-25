@@ -639,7 +639,7 @@ bo$bobin[bo$bobin=="[6e+03,1e+04)"]="[0.6w,1w)"
 bo$bobin[bo$bobin=="[1e+04,2e+04)"]="[1w,2w)"
 bo$bobin[bo$bobin=="[2e+04,5e+04)"]="[2w,5w)"
 bo$bobin[bo$bobin=="[5e+04,1e+05)"]="[5w,5-10w)"
-bo$bobin[bo$bobin=="[1e+05,1e+06]"]="10w以上"
+bo$bobin[bo$bobin=="[1e+05,1e+06]"]="大于10w"
 bo=data.frame(table(melt(data.frame(linetype=bo$linetype,bobin=bo$bobin),id=c("linetype","bobin"))))   
 #bo=bo %>% group_by(linetype,bobin) %>% summarise(num=n()) 
 plot <- hPlot(Freq~linetype, data = bo,group = "bobin",type = "column",title="最高信用卡额度分布(大额渠道VS大额主营)")
@@ -661,7 +661,7 @@ bo$bobin[bo$bobin=="[6e+03,1e+04)"]="[0.6w,1w)"
 bo$bobin[bo$bobin=="[1e+04,2e+04)"]="[1w,2w)"
 bo$bobin[bo$bobin=="[2e+04,5e+04)"]="[2w,5w)"
 bo$bobin[bo$bobin=="[5e+04,1e+05)"]="[5w,5-10w)"
-bo$bobin[bo$bobin=="[1e+05,1e+06]"]="10w以上"
+bo$bobin[bo$bobin=="[1e+05,1e+06]"]="大于10w"
 bo=data.frame(table(melt(data.frame(week=bo$week,bobin=bo$bobin),id=c("week","bobin"))))   
 #bo=bo %>% group_by(linetype,bobin) %>% summarise(num=n()) 
 plot <- hPlot(Freq~week, data = bo,group = "bobin",type = "column",title="大额渠道最高信用卡额度分布")
@@ -683,7 +683,7 @@ bo$bobin[bo$bobin=="[6e+03,1e+04)"]="[0.6w,1w)"
 bo$bobin[bo$bobin=="[1e+04,2e+04)"]="[1w,2w)"
 bo$bobin[bo$bobin=="[2e+04,5e+04)"]="[2w,5w)"
 bo$bobin[bo$bobin=="[5e+04,1e+05)"]="[5w,5-10w)"
-bo$bobin[bo$bobin=="[1e+05,1e+06]"]="10w以上"
+bo$bobin[bo$bobin=="[1e+05,1e+06]"]="大于10w"
 bo=data.frame(table(melt(data.frame(week=bo$week,bobin=bo$bobin),id=c("week","bobin"))))   
 #bo=bo %>% group_by(linetype,bobin) %>% summarise(num=n()) 
 plot <- hPlot(Freq~week, data = bo,group = "bobin",type = "column",title="大额主营最高信用卡额度分布")
@@ -705,7 +705,7 @@ bo$bobin[bo$bobin=="[1e+04,2e+04)"]="[1w,2w)"
 bo$bobin[bo$bobin=="[2e+04,3e+04)"]="[2w,3w)"
 bo$bobin[bo$bobin=="[3e+04,5e+04)"]="[3w,5w)"
 bo$bobin[bo$bobin=="[5e+04,1e+05)"]="[5w,5-10w)"
-bo$bobin[bo$bobin=="[1e+05,1e+07]"]="10w以上"
+bo$bobin[bo$bobin=="[1e+05,1e+07]"]="大于10w"
 bo=data.frame(table(melt(data.frame(linetype=bo$linetype,bobin=bo$bobin),id=c("linetype","bobin"))))   
 #bo=bo %>% group_by(linetype,bobin) %>% summarise(num=n()) 
 plot <- hPlot(Freq~linetype, data = bo,group = "bobin",type = "column",title="其他贷款最大额度分布(大额渠道VS大额主营)")
@@ -726,7 +726,7 @@ bo$bobin[bo$bobin=="[1e+04,2e+04)"]="[1w,2w)"
 bo$bobin[bo$bobin=="[2e+04,3e+04)"]="[2w,3w)"
 bo$bobin[bo$bobin=="[3e+04,5e+04)"]="[3w,5w)"
 bo$bobin[bo$bobin=="[5e+04,1e+05)"]="[5w,5-10w)"
-bo$bobin[bo$bobin=="[1e+05,1e+07]"]="10w以上"
+bo$bobin[bo$bobin=="[1e+05,1e+07]"]="大于10w"
 bo=data.frame(table(melt(data.frame(week=bo$week,bobin=bo$bobin),id=c("week","bobin"))))   
 #bo=bo %>% group_by(linetype,bobin) %>% summarise(num=n()) 
 plot <- hPlot(Freq~week, data = bo,group = "bobin",type = "column",title="大额渠道其他贷款最大额度分布")
@@ -747,7 +747,7 @@ bo$bobin[bo$bobin=="[1e+04,2e+04)"]="[1w,2w)"
 bo$bobin[bo$bobin=="[2e+04,3e+04)"]="[2w,3w)"
 bo$bobin[bo$bobin=="[3e+04,5e+04)"]="[3w,5w)"
 bo$bobin[bo$bobin=="[5e+04,1e+05)"]="[5w,5-10w)"
-bo$bobin[bo$bobin=="[1e+05,1e+07]"]="10w以上"
+bo$bobin[bo$bobin=="[1e+05,1e+07]"]="大于10w"
 bo=data.frame(table(melt(data.frame(week=bo$week,bobin=bo$bobin),id=c("week","bobin"))))   
 #bo=bo %>% group_by(linetype,bobin) %>% summarise(num=n()) 
 plot <- hPlot(Freq~week, data = bo,group = "bobin",type = "column",title="大额主营其他贷款最大额度分布")
