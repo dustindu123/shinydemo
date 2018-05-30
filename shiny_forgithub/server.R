@@ -9,6 +9,7 @@ library(DT)
 library(ggplot2)
 library(ggthemes)
 library(ggradar)
+library(scales)
 
 
 shinyServer(function(input,output){
