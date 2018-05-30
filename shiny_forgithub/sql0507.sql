@@ -723,6 +723,7 @@ data$citylevel_pho[is.na(data$citylevel_pho)]=7
 data$citylevel_bin=ifelse(data$citylevel_pho<6,sprintf("%i线",data$citylevel_pho),"6线及以下")
 
 data$pho_city=NULL
+data$citylevel_pho=NULL
 
 ###对城市进行处理
 
@@ -761,6 +762,10 @@ return(data)
 basic=dealBasic(basic)
 channeleva=merge(channel[channel$chuo_status==1,],basic,"userid")
 
+for (i in 30:39){
+channeleva[,i]=as.numeric(channeleva[,i]) }
+
+####################
 ceshi1= channeleva[channeleva$sourcetype=="app",] %>% group_by(sourcename) %>%
 summarise(num=n(),
 edu=sum(edu %in% c("1硕士","2本科")&!is.na(edu))/sum(!is.na(edu)),
@@ -783,7 +788,138 @@ zx2=sum((hoverdue2y+coverdue2y+ooverdue2y)==0 &ooverdue2y!=-100&ooverdue2y!=-1&!
 subset(num>20)
 
 ceshi1[ceshi1=="NaN"]=NA
+#########################################
+score=function(data){
 
+##基本信息打分
+data$edu_score=ifelse(data$edu=="1研究生",2,
+    ifelse(data$edu=="2本科",1,
+    ifelse(data$edu=="3专科"|is.na(data$edu),0,-1)))
+data$city_score=ifelse(data$citylevel_bin=="1线",2,
+    ifelse(data$citylevel_bin=="2线",1,
+    ifelse(data$citylevel_bin %in% c("3线","4线")|is.na(data$citylevel_bin),0,-1)))
+data$usertype_score=
+    ifelse(data$usertype=="5纯新",1,
+    ifelse(data$usertype=="4有额未发标",1.5,
+    ifelse(data$usertype=="2已成交"|is.na(data$usertype) ,0,
+    ifelse(data$usertype =="2发标未成交",-1,-2))))
+
+##模型类评分
+data$bin_score=ifelse(data$credit_bin==1,3,
+    ifelse(data$credit_bin ==2,2,
+    ifelse(data$credit_bin ==3,1,
+    ifelse((data$credit_bin>3&data$credit_bin<=5)|is.na(data$credit_bin),0,
+    ifelse(data$credit_bin>5&data$credit_bin<=8,-1,-2)))))
+    
+data$tc_score=ifelse(data$risk_score>0&data$risk_score<=20,2,
+    ifelse(data$risk_score>20&data$risk_score<=40,1,
+    ifelse((data$risk_score>40&data$risk_score<=60)|is.na(data$risk_score),0,
+    ifelse(data$risk_score>60&data$risk_score<=80,-1,-2))))
+    
+data$um_score=ifelse(data$umeng_score>800&data$umeng_score<=850,2,
+    ifelse(data$umeng_score>700&data$umeng_score<=800,1,
+    ifelse((data$umeng_score>600&data$umeng_score<=700)|is.na(data$umeng_score),0,
+    ifelse(data$umeng_score>500&data$umeng_score<=600,-1,
+    ifelse(data$umeng_score>400&data$umeng_score<=500,-1.5,-2)))))
+    
+data$jd_score=ifelse(data$jdcredit_score>700&data$jdcredit_score<=850,2,
+    ifelse(data$jdcredit_score>650&data$jdcredit_score<=700,1,
+    ifelse((data$jdcredit_score>620&data$jdcredit_score<=650)|is.na(data$jdcredit_score),0,
+    ifelse(data$jdcredit_score>560&data$jdcredit_score<=620,-1,-2))))
+    
+##用户资质
+
+data$cmax_score=ifelse(data$cmax>=100000,3,
+    ifelse(data$cmax>=50000&data$cmax<100000,2,
+    ifelse(data$cmax>=20000&data$cmax<50000 ,1,
+    ifelse((data$cmax>=10000&data$cmax<20000)|is.na(data$cmax),0,
+    ifelse(data$cmax>=6000&data$cmax<10000,-1,-2)))))
+
+data$omax_score=ifelse(data$omax>=100000,3,
+    ifelse(data$omax>=50000&data$omax<100000,2,
+    ifelse(data$omax>=20000&data$omax<50000 ,1,
+    ifelse((data$omax>=10000&data$omax<20000)|is.na(data$omax),0,
+    ifelse(data$omax>=6000&data$omax<10000,-1,-2)))))
+
+data$pre_score=ifelse(data$pretax=="30k+",3,
+    ifelse(data$pretax=="15k-30k",2,
+    ifelse(data$pretax=="08k-15k",1,
+    ifelse(data$pretax=="05k-08k",0,
+    ifelse(data$pretax=="missing",0,
+    ifelse(data$pretax=="02k-05k",-1,
+    ifelse(data$pretax=="0-02k",-2,-3)))))))
+    
+##多头数据
+
+data$bo_score=ifelse(data$boappnum==0,2,
+    ifelse(data$boappnum>0&data$boappnum<=1,1,
+    ifelse(data$boappnum>1&data$boappnum<=5 |is.na(data$boappnum),0,
+    ifelse(data$boappnum>5&data$boappnum<=10 ,-1,
+    ifelse(data$boappnum>10&data$boappnum<=20,-2,-3)))))
+
+data$td_score=ifelse(data$td_3m==0,2,
+    ifelse(data$td_3m>0&data$td_3m<=1,1,
+    ifelse((data$td_3m>1&data$td_3m<=5 )|is.na(data$td_3m),0,
+    ifelse(data$td_3m>5&data$td_3m<=10 ,-1,
+    ifelse(data$td_3m>10&data$td_3m<=20,-2,-3)))))
+    
+data$zx1_score=ifelse(data$query1m==0,2,
+    ifelse(data$query1m>0&data$query1m<=1,1,
+    ifelse((data$query1m>1&data$query1m<=5 )|is.na(data$query1m),0,
+    ifelse(data$query1m>5&data$query1m<=10 ,-1,
+    ifelse(data$query1m>10&data$query1m<=20,-2,-3)))))
+
+##逾期数据
+
+data$msg_score=ifelse(data$message_count_default==0,2,
+    ifelse(data$message_count_default>0&data$message_count_default<5,1,
+    ifelse((data$message_count_default>=5&data$message_count_default<10) |is.na(data$message_count_default),0,
+    ifelse(data$message_count_default>=10&data$message_count_default<20,-1,-2))))
+
+
+data$zx2_score=ifelse((data$hoverdue2y+data$coverdue2y+data$ooverdue2y)==0&data$hoverdue2y>-1&data$coverdue2y>-1&data$ooverdue2y>-1,2,
+    ifelse((data$hoverdue2y+data$coverdue2y+data$ooverdue2y)>0&(data$hoverdue2y+data$coverdue2y+data$ooverdue2y)<5&data$hoverdue2y>-1&data$coverdue2y>-1&data$ooverdue2y>-1,1,
+    ifelse(((data$hoverdue2y+data$coverdue2y+data$ooverdue2y)>=5&(data$hoverdue2y+data$coverdue2y+data$ooverdue2y)<10&data$hoverdue2y>-1&data$coverdue2y>-1&data$ooverdue2y>-1 )|(data$hoverdue2y==-1|data$coverdue2y==-1|data$ooverdue2y==-1 ),0,
+    ifelse((data$hoverdue2y+data$coverdue2y+data$ooverdue2y)>=10&(data$hoverdue2y+data$coverdue2y+data$ooverdue2y)<20&data$hoverdue2y>-1&data$coverdue2y>-1&data$ooverdue2y>-1 ,-1,-2))))
+    
+data=data[,c(2,41:55)]    
+return(data)
+    }
+fscore=score(channeleva[channeleva$sourcetype=="app"&channeleva$sourcename %in% ceshi1$sourcename,])
+#####准备函数开始
+ratio=function(x){
+h=sum(x,na.rm=TRUE)/sum(!is.na(x))
+return(h)
+}
+
+######准备函数结束
+score= fscore %>% group_by(sourcename) %>%
+summarise(
+edu=ratio(edu_score),
+city=ratio(city_score),
+usertype=ratio(usertype_score),
+bin=ratio(bin_score),
+tengxun=ratio(tc_score),
+umeng=ratio(um_score),
+jd=ratio(jd_score),
+max_creditcard=ratio(cmax_score),
+max_otherloan=ratio(omax_score),
+salary=ratio(pre_score),
+boapp=ratio(bo_score),
+tongdun=ratio(td_score),
+zx_query=ratio(zx1_score),
+ovd_msg=ratio(msg_score),
+overdue_zx=ratio(zx2_score),
+num=n())
+
+
+
+score[score=="NaN"]=0
+
+
+
+
+########################
 
 channeleva$userid=NULL
 channeleva$first_chuo_bin=NULL
@@ -801,14 +937,26 @@ channeleva$linetype=NULL
 channeleva$age_bin=NULL
 channeleva$citylevel_pho=NULL
 
-basic$userid=NULL
+basic$rand=basic$userid%%1000
 
-basicinfo=basic[,c(2,3,4,5,8,9,10,28,29)]
-model=basic[,c(1,2,3,8,11,12,13)]
-salary=basic[,c(2,3,8,14)]
-duotou=basic[,c(2,3,6,7,8,15,16,17)]
-zizhi=basic[,c(2,3,8,18,19,20)]
-owing=basic[,c(2,3,8,21,22,23)]
+basic1=basic[basic$linetype =="大额主营",]
+basic2=basic[basic$linetype =="小额",]
+basic3=basic[basic$linetype=="大额渠道",]
+
+
+basic1=basic1[basic1$rand %in% sample(0:999,500),]
+basic2=basic2[basic2$rand %in% sample(0:999,500),]
+basic=rbind(basic1,basic2,basic3)
+
+basic$userid=NULL
+basic$rand=NULL
+
+basicinfo=basic[,c(2,3,4,5,8,9,10,27,28)]
+model=basic[,c(1,2,3,8,10,11,12)]
+salary=basic[,c(2,3,8,13)]
+duotou=basic[,c(2,3,6,7,8,14,15,16)]
+zizhi=basic[,c(2,3,8,17,18,19)]
+owing=basic[,c(2,3,8,20,21,22)]
 
 
 ##
@@ -817,6 +965,7 @@ write.table(channel,"D:/shinydemo/shiny_forgithub/channel.txt",quote=FALSE,row.n
 ##
 write.table(channeleva,"D:/shinydemo/shiny_forgithub/channeleva.txt",quote=FALSE,row.names=FALSE,fileEncoding = "UTF-8") ##地址可更改 
 write.table(ceshi1,"D:/shinydemo/shiny_forgithub/ceshi1.txt",quote=FALSE,row.names=FALSE,fileEncoding = "UTF-8") ##地址可更改 
+write.table(score,"D:/shinydemo/shiny_forgithub/score.txt",quote=FALSE,row.names=FALSE,fileEncoding = "UTF-8") ##地址可更改 
 ##
 
 write.table(basicinfo,"D:/shinydemo/shiny_forgithub/basicinfo.txt",quote=FALSE,row.names=FALSE,fileEncoding = "UTF-8") ##地址可更改 

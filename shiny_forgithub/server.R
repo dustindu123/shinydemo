@@ -8,6 +8,7 @@ library(shinydashboard)
 library(DT)
 library(ggplot2)
 library(ggthemes)
+library(ggradar)
 
 
 shinyServer(function(input,output){
@@ -34,7 +35,7 @@ channel=read.table("channel.txt",header = TRUE,sep="",fileEncoding="UTF-8",row.n
 channel$first_login_time=as.character(channel$first_login_time)
 
 ceshi1=read.table("ceshi1.txt",header = TRUE,sep="",fileEncoding="UTF-8",row.names = NULL) ###正确
-
+score=read.table("score.txt",header = TRUE,sep="",fileEncoding="UTF-8",row.names = NULL) ###正确
 ###############渠道评估数据处理
 channeleva=read.table("channeleva.txt",header = TRUE,sep="",fileEncoding="UTF-8",row.names = NULL) ###正确
 channeleva$firstchuo=as.character(channeleva$firstchuo)
@@ -60,40 +61,65 @@ channeleva1$umbin=cut(channeleva1$umeng_score,breaks=c(300,400,500,600,700,850))
 channeleva1$jdbin=cut(channeleva1$jdcredit_score,breaks=c(400,550,620,650,700,850))
 channeleva1$credit_bin[channeleva1$credit_bin>=10]="十及以上"
 channeleva1$cmaxbin=as.character(cut(channeleva1$cmax,breaks=c(0,3000,6000,10000,20000,50000,100000,1000000),include.lowest = TRUE,right = FALSE))
+
+channeleva1$cmaxbin[channeleva1$cmaxbin=="[0,3e+03)"]="[0,0.3w)"
+channeleva1$cmaxbin[channeleva1$cmaxbin=="[3e+03,6e+03)"]="[0.3w,0.6w)"
+channeleva1$cmaxbin[channeleva1$cmaxbin=="[6e+03,1e+04)"]="[0.6w,1w)"
+channeleva1$cmaxbin[channeleva1$cmaxbin=="[1e+04,2e+04)"]="[1w,2w)"
+channeleva1$cmaxbin[channeleva1$cmaxbin=="[2e+04,5e+04)"]="[2w,5w)"
+channeleva1$cmaxbin[channeleva1$cmaxbin=="[5e+04,1e+05)"]="[5w,5-10w)"
+channeleva1$cmaxbin[channeleva1$cmaxbin=="[1e+05,1e+06]"]="大于10w"
+
 channeleva1$omaxbin=as.character(cut(channeleva1$omax,breaks=c(0,5000,10000,20000,30000,50000,100000,10000000),include.lowest = TRUE,right = FALSE))
+
+channeleva1$omaxbin[channeleva1$omaxbin=="[0,5e+03)"]="[0,0.5w)"
+channeleva1$omaxbin[channeleva1$omaxbin=="[5e+03,1e+04)"]="[0.5w,1w)"
+channeleva1$omaxbin[channeleva1$omaxbin=="[1e+04,2e+04)"]="[1w,2w)"
+channeleva1$omaxbin[channeleva1$omaxbin=="[2e+04,3e+04)"]="[2w,3w)"
+channeleva1$omaxbin[channeleva1$omaxbin=="[3e+04,5e+04)"]="[3w,5w)"
+channeleva1$omaxbin[channeleva1$omaxbin=="[5e+04,1e+05)"]="[5w,5-10w)"
+channeleva1$omaxbin[channeleva1$omaxbin=="[1e+05,1e+07]"]="大于10w"
+
 channeleva1$bobin=as.character(cut(channeleva1$boappnum,breaks=c(0,1,2,5,10,20,500),include.lowest = TRUE,right = FALSE))
+
+channeleva1$bobin[channeleva1$bobin=="[0,1)"]="[0,01)"
+channeleva1$bobin[channeleva1$bobin=="[1,2)"]="[01,02)"
+channeleva1$bobin[channeleva1$bobin=="[2,5)"]="[02,05)"
+channeleva1$bobin[channeleva1$bobin=="[5,10)"]="[05,10)"
+
+
 channeleva1$tdbin1=as.character(cut(channeleva1$td_3m,breaks=c(0,1,2,5,10,20,50,100),include.lowest = TRUE,right = FALSE))
+
+channeleva1$tdbin1[channeleva1$tdbin1=="[0,1)"]="[0,01)"
+channeleva1$tdbin1[channeleva1$tdbin1=="[1,2)"]="[01,02)"
+channeleva1$tdbin1[channeleva1$tdbin1=="[2,5)"]="[02,05)"
+channeleva1$tdbin1[channeleva1$tdbin1=="[5,10)"]="[05,10)"
+
+
 channeleva1$tdbin2=as.character(cut(channeleva1$final_score,breaks=c(0,20,80,100),include.lowest = TRUE,right = FALSE))
 channeleva1$zxbin1=as.character(cut(channeleva1$query1m,breaks=c(0,1,2,5,10,20,50),include.lowest = TRUE,right = FALSE))
+
+channeleva1$zxbin1[channeleva1$zxbin1=="[0,1)"]="[0,01)"
+channeleva1$zxbin1[channeleva1$zxbin1=="[1,2)"]="[01,02)"
+channeleva1$zxbin1[channeleva1$zxbin1=="[2,5)"]="[02,05)"
+channeleva1$zxbin1[channeleva1$zxbin1=="[5,10)"]="[05,10)"
+
 channeleva1$defbin=as.character(cut(channeleva1$message_count_default,breaks=c(0,1,5,10,20,500),include.lowest = TRUE,right = FALSE))
+
+channeleva1$defbin[channeleva1$defbin=="[0,1)"]="[0,01)"
+channeleva1$defbin[channeleva1$defbin=="[1,5)"]="[01,05)"
+channeleva1$defbin[channeleva1$defbin=="[5,10)"]="[05,10)"
+
 channeleva1$zxbin2=as.character(cut((channeleva1$hoverdue2y+channeleva1$coverdue2y+channeleva1$ooverdue2y),breaks=c(0,1,5,10,20,500),include.lowest = TRUE,right = FALSE))
+
+channeleva1$zxbin2[channeleva1$zxbin2=="[0,1)"]="[0,01)"
+channeleva1$zxbin2[channeleva1$zxbin2=="[1,5)"]="[01,05)"
+channeleva1$zxbin2[channeleva1$zxbin2=="[5,10)"]="[05,10)"
 
 channeleva2=merge(channeleva2,m,"sourcename")
 channeleva2$firstchuo=as.character(channeleva2$firstchuo)
 channeleva2$num=NULL
 rm(app,m)
-###
-
-#ceshi1= channeleva1 %>% group_by(sourcename) %>%
-#summarise(edu=sum(edu %in% c("1硕士","2本科")&!is.na(edu))/sum(!is.na(edu)),
-#usertype=sum(usertype %in% c("4有额未发标","5纯新")&!is.na(usertype))/sum(!is.na(usertype)),
-#citylevel=sum(citylevel_bin %in% c("1线","2线")&!is.na(citylevel_bin))/sum(!is.na(citylevel_bin)),
-#bin=sum(credit_bin <=2&!is.na(credit_bin))/sum(!is.na(credit_bin)),
-#tc=sum(risk_score <=20&!is.na(risk_score))/sum(!is.na(risk_score)),
-#jd=sum(jdcredit_score >=700&!is.na(jdcredit_score))/sum(!is.na(jdcredit_score)),
-#um=sum(umeng_score >=700&!is.na(umeng_score))/sum(!is.na(umeng_score)),
-#cmax=sum(cmax >=50000&!is.na(cmax))/sum(!is.na(cmax)),
-#omax=sum(omax >=50000&!is.na(omax))/sum(!is.na(omax)),
-#pre=sum(pretax %in% c("05k-08k","08k-15k","15k-30k","30k+"))/n(),
-#bo=sum(boappnum<=1&boappnum>=0 &!is.na(boappnum))/sum(!is.na(boappnum)&boappnum>=0),
-#td1=sum(td_3m==0 &!is.na(td_3m))/sum(!is.na(td_3m)&td_3m>=0),
-#td2=sum(final_score<80 &final_score>=0&!is.na(final_score))/sum(!is.na(final_score)&final_score>=0),
-#zx1=sum(query1m<=1 &!is.na(query1m)&query1m>=0&query1m!=-1)/sum(!is.na(query1m)&query1m!=-100&query1m>=0),
-#def=sum(message_count_default==0 &!is.na(message_count_default))/sum(!is.na(message_count_default)&message_count_default>=0),
-#zx2=sum((hoverdue2y+coverdue2y+ooverdue2y)==0 &ooverdue2y!=-100&ooverdue2y!=-1&!is.na(hoverdue2y)&!is.na(coverdue2y)&!is.na(ooverdue2y))/sum(!is.na(hoverdue2y)&!is.na(coverdue2y)&ooverdue2y!=-1&!is.na(ooverdue2y)&ooverdue2y!=-100)
-#)
-#ceshi1[ceshi1=="NaN"]=NA
-######准备函数结束
 ##################基本信息
 
   selectedData1 <- reactive({
@@ -1235,6 +1261,59 @@ plot <- hPlot(Freq~sourcename, data = bo,group = "edu",type = "column",title=spr
 plot$plotOptions(column = list(stacking = "percent"))
 plot$yAxis(reversedStacks = FALSE)
 return(plot)    
+})
+################
+##画雷达图
+#mm=score[grep("广点通|资产大额秋成科技|资产大额淘钱宝",score$sourcename),]
+
+output$sp1<-renderPlot({ 
+      mm1=subset(score,select=sourcename:usertype)
+      mm1=mm1[mm1$sourcename %in% input$spider,] %>% mutate_at(vars(edu:usertype),funs(rescale))
+      rada=ggradar(mm1)
+  return(rada)  
+})
+
+output$sp2<-renderPlot({ 
+      mm2=score[,c(1,5:8)]
+      mm2=mm2[mm2$sourcename %in% input$spider,] %>% mutate_at(vars(bin:jd),funs(rescale))
+      rada=ggradar(mm2)
+  return(rada)  
+})
+
+output$sp3<-renderPlot({ 
+      mm3=score[,c(1,9:11)]
+      mm3=mm3[mm3$sourcename %in% input$spider,] %>% mutate_at(vars(max_creditcard:salary),funs(rescale))
+      rada=ggradar(mm3)
+  return(rada)  
+})
+
+output$sp4<-renderPlot({ 
+      mm4=score[,c(1,12:14)]
+      mm4=mm4[mm4$sourcename %in% input$spider,] %>% mutate_at(vars(boapp:zx_query),funs(rescale))
+      rada=ggradar(mm4)
+  return(rada)  
+})
+
+output$sp5<-renderPlot({ 
+      mm5=score[,c(1,15:16)]
+      mm5=mm5[mm5$sourcename %in% input$spider,] %>% mutate_at(vars(ovd_msg:overdue_zx),funs(rescale))
+      rada=ggradar(mm5)
+  return(rada)  
+})
+######
+output$sp6<-renderPlot({ 
+      mm6=score %>% group_by(sourcename) %>%
+      summarise(basicinfo=edu+city+usertype,
+      modelscore=(bin*2+tengxun*2+umeng*2+jd)/7,
+      asset=salary+max_creditcard+max_otherloan,
+      multiloan=boapp+tongdun+zx_query,
+      overdue=ovd_msg+overdue_zx )
+      
+      
+      
+      mm6=mm6[mm6$sourcename %in% input$spider,] %>% mutate_at(vars(basicinfo:overdue),funs(rescale))
+      rada=ggradar(mm6)
+  return(rada)  
 })
 
 ####################################################################################

@@ -271,20 +271,34 @@ tabItems(
               hr(),
               h3("筛选时间,查看不同时间段内的信息。"),
               width = 12),
-          box(selectInput('basic',h3('基本信息'), c("edu","usertype", "citylevel"))),
+          box(
+           checkboxGroupInput("spider", 
+                              h4("渠道选择"), 
+                              choices = c("广点通", 
+                                             "资产大额秋成科技", 
+                                             "资产大额淘钱宝"),
+                              selected = c("广点通","资产大额秋成科技","资产大额淘钱宝")),          
+          width = 12          ),
+          box(plotOutput("sp6"),width = 12),
+          box(selectInput('basic',h4('基本信息'), c("edu","usertype", "citylevel")),width = 12),
           box(showOutput("plot61","highcharts")), 
+          box(plotOutput("sp1")),
 ##
-          box(selectInput('basic1',h3('模型类评分'), c("bin","tengxun", "jd","umeng"))),
-          box(showOutput("plot62","highcharts")) ,       
+          box(selectInput('basic1',h3('模型类评分'), c("bin","tengxun", "jd","umeng")),width = 12),
+          box(showOutput("plot62","highcharts")) , 
+          box(plotOutput("sp2")),
 ##
-          box(selectInput('basic2',h3('用户资质'), c("max creditcard limit","max otherloan limit", "salary"))),
-          box(showOutput("plot63","highcharts")) ,       
+          box(selectInput('basic2',h3('用户资质'), c("max creditcard limit","max otherloan limit", "salary")),width = 12),
+          box(showOutput("plot63","highcharts")) , 
+          box(plotOutput("sp3")),
 ##
-          box(selectInput('basic3',h3('多头数据'), c("borrow app num","tongdun_3m", "tongdun_reject","credit report query_1m"))),
-          box(showOutput("plot64","highcharts")) ,       
+          box(selectInput('basic3',h3('多头数据'), c("borrow app num","tongdun_3m", "tongdun_reject","credit report query_1m")),width = 12),
+          box(showOutput("plot64","highcharts")) , 
+          box(plotOutput("sp4")),
 ##
-          box(selectInput('basic4',h3('逾期数据'), c("overdue message count","credit report overdue_2y"))),
-          box(showOutput("plot65","highcharts"))      
+          box(selectInput('basic4',h3('逾期数据'), c("overdue message count","credit report overdue_2y")),width = 12),
+          box(showOutput("plot65","highcharts")) ,
+          box(plotOutput("sp5"))
           )
       ),
       tabItem("M站推广渠道", "渠道质量监控 tab content")
