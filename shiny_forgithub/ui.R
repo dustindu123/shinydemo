@@ -1,5 +1,6 @@
 options(shiny.sanitize.errors = FALSE)
 library(shiny)
+library(DT)
 #library(praise)
 
 library(shinydashboard)
@@ -22,7 +23,19 @@ owing$firstchuo=as.character(owing$firstchuo)
 
 duotou=read.table("duotou.txt",header = TRUE,sep="",fileEncoding="UTF-8") ###正确
 duotou$firstchuo=as.character(duotou$firstchuo)
+
+channel=read.table("channel.txt",header = TRUE,sep="",fileEncoding="UTF-8",row.names = NULL) ###正确
+channel$first_login_time=as.character(channel$first_login_time)
+
+channeleva=read.table("channeleva.txt",header = TRUE,sep="",fileEncoding="UTF-8",row.names = NULL) ###正确
+channeleva$firstchuo=as.character(channeleva$firstchuo)
+channeleva1=channeleva[channeleva$sourcetype=="app",]
+channeleva2=channeleva[channeleva$sourcetype=="M",]
+
+
 ####
+
+
 dashboardPage(
  dashboardHeader(title="流量监控"),##标题
  dashboardSidebar(
@@ -44,7 +57,11 @@ dashboardPage(
         #menuSubItem("不良", tabName = "不良")
         ),
       
-        menuItem("渠道质量监控", tabName = "渠道质量监控", icon = icon("dashboard"))
+        menuItem("渠道质量监控", tabName = "渠道质量监控", icon = icon("dashboard"),startExpanded = TRUE,
+        menuSubItem("渠道全流程转化", tabName = "渠道全流程转化"),
+        menuSubItem("APP推广渠道", tabName = "APP推广渠道"),
+        menuSubItem("M站推广渠道", tabName = "M站推广渠道")
+        )
     )
 ),
  dashboardBody(
@@ -52,7 +69,7 @@ tabItems(
       tabItem("大额基本数据", 
         fluidRow(
           box(
-            dateRangeInput("dates", label = h3("Date range"))
+            dateRangeInput("dates", label = h3("Date range")),width=12
             #hr(),
             #fluidRow(column(4, verbatimTextOutput("value")))            
             #h3(print(praise())),
@@ -70,8 +87,8 @@ tabItems(
                format = "yyyy-mm-dd"),
               hr(),
               h3("筛选时间,查看不同时间段内的各维度信息。"),
-              hr()
-              #h4(print(praise()))
+              hr(),
+              width = 12
                ),
         
           box(showOutput("plot10","highcharts")),
@@ -102,8 +119,8 @@ tabItems(
                format = "yyyy-mm-dd"),
               hr(),
               h3("筛选时间,查看不同时间段内的各维度信息。"),
-              hr()
-              #h4(print(praise()))
+              hr(),
+              width = 12
                ),
           box(showOutput("plot13","highcharts")),
           box(showOutput("plot16","highcharts")),
@@ -129,8 +146,8 @@ tabItems(
                format = "yyyy-mm-dd"),
               hr(),
               h3("筛选时间,查看不同时间段内的各维度信息。"),
-              hr()
-              #h4(print(praise()))
+              hr(),
+              width = 12
                ),
           box(showOutput("plot25","highcharts")),
           box(showOutput("plot26","highcharts")),
@@ -150,8 +167,8 @@ tabItems(
                format = "yyyy-mm-dd"),
               hr(),
               h3("筛选时间,查看不同时间段内的各维度信息。"),
-              hr()
-              #h4(print(praise()))
+              hr(),
+              width = 12
                ),
           box(showOutput("plot43","highcharts")),
           box(showOutput("plot46","highcharts")),
@@ -174,8 +191,8 @@ tabItems(
                format = "yyyy-mm-dd"),
               hr(),
               h3("筛选时间,查看不同时间段内的各维度信息。"),
-              hr()
-              #h4(print(praise()))
+              hr(),
+              width = 12
                ),
           box(showOutput("plot52","highcharts")),
           box(showOutput("plot55","highcharts")),
@@ -199,9 +216,8 @@ tabItems(
                format = "yyyy-mm-dd"),
               hr(),
               h3("筛选时间,查看不同时间段内的各维度信息。"),
-              hr()
-              #h4(print(praise()))
-               ),
+              hr(),
+              width = 12               ),
           box(showOutput("plot28","highcharts")),
           box(showOutput("plot31","highcharts")),
           box(showOutput("plot34","highcharts")),   
@@ -224,9 +240,54 @@ tabItems(
       
       
       ), 
-      tabItem("渠道质量监控", "渠道质量监控 tab content")
+      tabItem("渠道全流程转化", 
+        fluidRow(
+          box(
+          dateRangeInput("dates8", "Select the date range:",
+               start = "2018-04-24",               
+               end = as.character(format(as.Date(max(channel$first_login_time))),"yyyy-mm-dd"),
+               min = "2018-04-24",               
+               max = as.character(format(as.Date(max(channel$first_login_time))),"yyyy-mm-dd"),
+               format = "yyyy-mm-dd"),width = 12
+               ),
+          box(dataTableOutput("rate1")),
+          box(dataTableOutput("rate2"))
+        )
       
-
+      ),
+      tabItem("APP推广渠道", 
+        fluidRow(
+          #box(dataTableOutput("rate1")),
+          #box(dataTableOutput("rate2")),
+         # box(selectInput('line', '业务线', 
+         #       c("app","M"))
+         #      ),
+          box(dateRangeInput("dates9", "Select the date range:",
+               start = "2018-04-24",               
+               end = as.character(format(as.Date(max(channeleva1$firstchuo))),"yyyy-mm-dd"),
+               min = "2018-04-24",               
+               max = as.character(format(as.Date(max(channeleva1$firstchuo))),"yyyy-mm-dd"),
+               format = "yyyy-mm-dd"),
+              hr(),
+              h3("筛选时间,查看不同时间段内的信息。"),
+              width = 12),
+          box(selectInput('basic',h3('基本信息'), c("edu","usertype", "citylevel"))),
+          box(showOutput("plot61","highcharts")), 
+##
+          box(selectInput('basic1',h3('模型类评分'), c("bin","tengxun", "jd","umeng"))),
+          box(showOutput("plot62","highcharts")) ,       
+##
+          box(selectInput('basic2',h3('用户资质'), c("max creditcard limit","max otherloan limit", "salary"))),
+          box(showOutput("plot63","highcharts")) ,       
+##
+          box(selectInput('basic3',h3('多头数据'), c("borrow app num","tongdun_3m", "tongdun_reject","credit report query_1m"))),
+          box(showOutput("plot64","highcharts")) ,       
+##
+          box(selectInput('basic4',h3('逾期数据'), c("overdue message count","credit report overdue_2y"))),
+          box(showOutput("plot65","highcharts"))      
+          )
+      ),
+      tabItem("M站推广渠道", "渠道质量监控 tab content")
   )
  )
 )

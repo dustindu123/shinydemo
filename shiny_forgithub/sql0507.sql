@@ -21,29 +21,6 @@ ods.cooperatesource
 where
 channelsid=2911 ) ) as a ;
 
-/*大额H5首登用户(弃用)
-drop table if exists appzc.dx_dae_user_h5login;
-create table if not exists appzc.dx_dae_user_h5login as
- select
-a.user_id as userid,a.login_time as login_dt,a.sourceid
-from
-( select
-user_id,
-login_time,
-cast(regexp_extract(channel_feature,'([^|]+$)',1) as int) as sourceid,
-row_number () over (partition by user_id order by login_time asc) as r
-from
-ods.user_login
-where
-cast(regexp_extract(channel_feature,'([^|]+$)',1) as int) in 
-(select
-sourceid
-from
-ods.cooperatesource
-where
-channelsid=2911) ) as a
-where
-a.r=1 ; */
 
 /*大额H5首登用户(使用)*/
 drop table if exists appzc.dx_dae_user_h5login;
@@ -123,6 +100,58 @@ cast( regexp_extract(useragent,'PPD-LoanApp/([^.]+)',1) as int)>6 ) ) as a
 where
 a.r=1 ) as app on ttl.userid=app.userid ;
 
+drop table if exists appzc.dx_dae_user_usertype;
+create table if not exists appzc.dx_dae_user_usertype as
+select
+a.*,
+case when a.reg_dt is not null then 'new'
+     when a.reg_dt is null and b.creationdate is null then 'undone'
+	 when a.reg_dt is null and b.creationdate is not null then 'done'
+	 end as usertype
+from
+appzc.dx_dae_user_basic as a
+left join
+(select
+borrowerid,
+creationdate,
+row_number () over (partition by borrowerid order by creationdate asc) as r
+from
+ods.listing
+where
+statusid in (4,12) ) as b
+on
+a.userid=b.borrowerid and b.creationdate<a.login_dt and b.r=1 
+where a.if_main=0;
+
+drop table if exists appzc.dx_dae_user_det;
+create table if not exists appzc.dx_dae_user_det as
+ select
+a.userid,
+cast(a.login_dt as timestamp) as login_dt,
+a.f_sourceid,
+regsc.sourcefeature,
+regsc.sourcename,
+a.usertype
+from
+appzc.dx_dae_user_usertype as a
+
+left join [shuffle]
+(
+select
+user_id,cast(time as timestamp) as imp_dt,row_number () over (partition by user_id order by time asc) as r
+from
+edw.fact_app_element_imp_daily
+where
+dt>'2018-04-20' and tgt_event_id='super_bigad_product') as imp on a.userid=imp.user_id and imp.r=1
+
+left join [shuffle]
+ods.userregisterchannels as regdt on a.userid=regdt.userid
+left join [shuffle]
+ods.cooperatesource as regsc on a.f_sourceid=regsc.sourceid
+ ;
+
+
+--###############################人群画像###################
 drop table if exists appzc.dx_flowmonitor_basicinfo;
 create table appzc.dx_flowmonitor_basicinfo
 as
@@ -432,7 +461,12 @@ rph,
 rpo,
 rpc,
 vloan,
-vvloan
+vvloan,
+query1m,
+hoverdue2y,
+ooverdue2y,
+coverdue2y
+
 
 
 from appzc.dx_flowmonitor_basicinfo5 dx 
@@ -452,6 +486,10 @@ rpo,
 rpc,
 vloan,
 vvloan,
+query1m,
+hoverdue2y,
+ooverdue2y,
+coverdue2y,
 ROW_NUMBER()over(partition by userid order by json_inserttime asc) as flag1
 from 
 (
@@ -463,11 +501,16 @@ json_inserttime,
 json_max_ccard_amount cmax,
 json_otherLoanMaxAmount omax,
 json_cnt_valid_ccard  vcard,
+
 json_repayamount_loanhouse_month as rph,
 cast(json_repayamount_loanother_month as decimal(32,4)) as rpo,
 cast(json_repayamount_creditcard_month as decimal(32,4)) as rpc,
 json_validotherloannum vloan,
 json_unsettledvalidotherloannum vvloan,
+'-100' as query1m,
+'-100' as hoverdue2y,
+'-100' as ooverdue2y,
+'-100' as coverdue2y,
 ROW_NUMBER()over(partition by userid order by json_inserttime asc) as flag
 
 from  edw.userpataresult
@@ -490,6 +533,10 @@ rpo,
 rpc,
 json_validotherloannumfull vloan,
 json_unsettledvalidotherloannum vvloan, 
+json_creditReportOneMonthQueryTimes as query1m,
+json_loanHouseOverdueMonthsInTwoYears as hoverdue2y,
+json_otherLoanOverdueMonthsInTwoYears as ooverdue2y,
+json_ccardOverdueMonthsTwoYears as coverdue2y,
 ROW_NUMBER()over(partition by pa.userid order by json_inserttime asc,gg.inserttime asc,kk.inserttime asc) as flag
 
 from  edw.userpataresult pa
@@ -516,11 +563,47 @@ json_bizid = '13003'
 and dt>='2018-04-24' 
 and json_flow_count='2' )b where flag=1 ) ly )ys  where flag1=1 )tt
 
-on dx.userid=tt.userid
+on dx.userid=tt.userid;
+
+
+--######################################渠道评估###############
+drop table if exists appzc.dx_channelmonitor_basicinfo;
+create table appzc.dx_channelmonitor_basicinfo
+as
+
+select 
+sourcename,
+sourcefeature,
+case when sourcefeature rlike '[0-9]' then 'app' else 'M' end as sourcetype,
+a.userid,
+to_date(a.first_login_time) as first_login_time,
+a.first_login_usertype,
+chuo_status,
+a.first_chuo_bin,
+youe_status,
+fb_status,
+cj_status,
+allcj_status
+
+from 
+appzc.dx_datatable_chuo  a
+
+inner join [shuffle]
+appzc.dx_dae_user_det b on a.userid=b.userid
+where log_status=1;
 
       
-   
-
+drop table if exists appzc.dx_channelmonitor_showrate;
+create table appzc.dx_channelmonitor_showrate
+as
+select sourcename,sourcetype ,count(*) as loginnum ,sum(a.chuo_status) as chuonum,sum(a.youe_status) as younum,
+cast(sum(a.chuo_status)/count(*) as decimal(32,4)) as chuoratio,
+cast(case when sum(a.chuo_status) >0 then sum(a.youe_status)/sum(a.chuo_status) else 0 end as decimal(32,4))as youeratio,
+cast(case when sum(a.youe_status) >0 then sum(fb_status)/sum(a.youe_status) else 0 end as decimal(32,4)) fbratio, 
+cast(sum(cj_status)/count(*) as decimal(32,4)) as zhratio,
+cast(sum(allcj_status)/count(*) as decimal(32,4))as allzhratio
+from appzc.dx_channelmonitor_basicinfo a 
+group by sourcename,sourcetype ; 
 
 
 
@@ -599,17 +682,14 @@ on a.userid=dx.userid
 
 
 
-
-
-
 #################################################################################
 source("D:/source/impala_connect.R")
 basic <- dbGetQuery(con, 
 "select  * 
-from appzc.dx_flowmonitor_basicinfo6
---where adddate(firstchuo,31)>=current_timestamp() 
---order by firstchuo desc"
+from appzc.dx_flowmonitor_basicinfo6"
 )
+##渠道各种率展示
+channel <- dbGetQuery(con, "select  * from appzc.dx_channelmonitor_basicinfo")
 
 
 ##basicinfo 数据处理
@@ -618,7 +698,7 @@ dealBasic=function(data){
 data$fl=NULL
 data$fl1=NULL
 data$fl2=NULL
-data$userid=NULL
+
 data$inserttime=NULL
 data$firstchuo_m=NULL
 data$dweek=NULL
@@ -679,19 +759,72 @@ data$pho_city=NULL
 return(data)
 }
 basic=dealBasic(basic)
-basicinfo=basic[,c(2,3,4,5,8,9,10,24,25)]
+channeleva=merge(channel[channel$chuo_status==1,],basic,"userid")
+
+ceshi1= channeleva[channeleva$sourcetype=="app",] %>% group_by(sourcename) %>%
+summarise(num=n(),
+edu=sum(edu %in% c("1硕士","2本科")&!is.na(edu))/sum(!is.na(edu)),
+usertype=sum(usertype %in% c("4有额未发标","5纯新")&!is.na(usertype))/sum(!is.na(usertype)),
+citylevel=sum(citylevel_bin %in% c("1线","2线")&!is.na(citylevel_bin))/sum(!is.na(citylevel_bin)),
+bin=sum(credit_bin <=2&!is.na(credit_bin))/sum(!is.na(credit_bin)),
+tc=sum(risk_score <=20&!is.na(risk_score))/sum(!is.na(risk_score)),
+jd=sum(jdcredit_score >=700&!is.na(jdcredit_score))/sum(!is.na(jdcredit_score)),
+um=sum(umeng_score >=700&!is.na(umeng_score))/sum(!is.na(umeng_score)),
+cmax=sum(cmax >=50000&!is.na(cmax))/sum(!is.na(cmax)),
+omax=sum(omax >=50000&!is.na(omax))/sum(!is.na(omax)),
+pre=sum(pretax %in% c("05k-08k","08k-15k","15k-30k","30k+"))/n(),
+bo=sum(boappnum<=1&boappnum>=0 &!is.na(boappnum))/sum(!is.na(boappnum)&boappnum>=0),
+td1=sum(td_3m==0 &!is.na(td_3m))/sum(!is.na(td_3m)&td_3m>=0),
+td2=sum(final_score<80 &final_score>=0&!is.na(final_score))/sum(!is.na(final_score)&final_score>=0),
+zx1=sum(query1m<=1 &!is.na(query1m)&query1m>=0&query1m!=-1)/sum(!is.na(query1m)&query1m!=-100&query1m>=0),
+def=sum(message_count_default==0 &!is.na(message_count_default))/sum(!is.na(message_count_default)&message_count_default>=0),
+zx2=sum((hoverdue2y+coverdue2y+ooverdue2y)==0 &ooverdue2y!=-100&ooverdue2y!=-1&!is.na(hoverdue2y)&!is.na(coverdue2y)&!is.na(ooverdue2y))/sum(!is.na(hoverdue2y)&!is.na(coverdue2y)&ooverdue2y!=-1&!is.na(ooverdue2y)&ooverdue2y!=-100)
+) %>%
+subset(num>20)
+
+ceshi1[ceshi1=="NaN"]=NA
+
+
+channeleva$userid=NULL
+channeleva$first_chuo_bin=NULL
+channeleva$sourcefeature=NULL
+channeleva$chuo_status=NULL
+channeleva$youe_status=NULL
+channeleva$fb_status=NULL
+channeleva$cj_status=NULL
+channeleva$allcj_status=NULL
+channeleva$inserttime=NULL
+channeleva$first_login_time=NULL
+channeleva$week=NULL
+channeleva$age=NULL
+channeleva$linetype=NULL
+channeleva$age_bin=NULL
+channeleva$citylevel_pho=NULL
+
+basic$userid=NULL
+
+basicinfo=basic[,c(2,3,4,5,8,9,10,28,29)]
 model=basic[,c(1,2,3,8,11,12,13)]
 salary=basic[,c(2,3,8,14)]
 duotou=basic[,c(2,3,6,7,8,15,16,17)]
 zizhi=basic[,c(2,3,8,18,19,20)]
 owing=basic[,c(2,3,8,21,22,23)]
 
-write.table(basicinfo,"D:/shiny_0509/data/basicinfo.txt",quote=FALSE,row.names=FALSE,fileEncoding = "UTF-8") ##地址可更改 
-write.table(model,"D:/shiny_0509/data/model.txt",quote=FALSE,row.names=FALSE,fileEncoding = "UTF-8") ##地址可更改   
-write.table(salary,"D:/shiny_0509/data/salary.txt",quote=FALSE,row.names=FALSE,fileEncoding = "UTF-8") ##地址可更改
-write.table(duotou,"D:/shiny_0509/data/duotou.txt",quote=FALSE,row.names=FALSE,fileEncoding = "UTF-8") ##地址可更改   
-write.table(zizhi,"D:/shiny_0509/data/zizhi.txt",quote=FALSE,row.names=FALSE,fileEncoding = "UTF-8") ##地址可更改   
-write.table(owing,"D:/shiny_0509/data/owing.txt",quote=FALSE,row.names=FALSE,fileEncoding = "UTF-8") ##地址可更改   
+
+##
+write.table(channel,"D:/shinydemo/shiny_forgithub/channel.txt",quote=FALSE,row.names=FALSE,fileEncoding = "UTF-8") ##地址可更改 
+##
+##
+write.table(channeleva,"D:/shinydemo/shiny_forgithub/channeleva.txt",quote=FALSE,row.names=FALSE,fileEncoding = "UTF-8") ##地址可更改 
+write.table(ceshi1,"D:/shinydemo/shiny_forgithub/ceshi1.txt",quote=FALSE,row.names=FALSE,fileEncoding = "UTF-8") ##地址可更改 
+##
+
+write.table(basicinfo,"D:/shinydemo/shiny_forgithub/basicinfo.txt",quote=FALSE,row.names=FALSE,fileEncoding = "UTF-8") ##地址可更改 
+write.table(model,"D:/shinydemo/shiny_forgithub/model.txt",quote=FALSE,row.names=FALSE,fileEncoding = "UTF-8") ##地址可更改   
+write.table(salary,"D:/shinydemo/shiny_forgithub/salary.txt",quote=FALSE,row.names=FALSE,fileEncoding = "UTF-8") ##地址可更改
+write.table(duotou,"D:/shinydemo/shiny_forgithub/duotou.txt",quote=FALSE,row.names=FALSE,fileEncoding = "UTF-8") ##地址可更改   
+write.table(zizhi,"D:/shinydemo/shiny_forgithub/zizhi.txt",quote=FALSE,row.names=FALSE,fileEncoding = "UTF-8") ##地址可更改   
+write.table(owing,"D:/shinydemo/shiny_forgithub/owing.txt",quote=FALSE,row.names=FALSE,fileEncoding = "UTF-8") ##地址可更改   
 
 
 

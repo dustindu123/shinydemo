@@ -1,29 +1,17 @@
 options(shiny.sanitize.errors = FALSE)
 library(reshape2)
 library(rCharts)
-library(rJava)
-library(bindrcpp)
-library(scales)
 library(data.table)
-library(gridExtra)
 library(dplyr)
 library(shiny)
 library(shinydashboard)
+library(DT)
+library(ggplot2)
+library(ggthemes)
+
 
 shinyServer(function(input,output){
 #########################################################################
-library(reshape2)
-library(rCharts)
-library(rJava)
-library(bindrcpp)
-library(scales)
-library(data.table)
-library(gridExtra)
-library(dplyr)
-library(shiny)
-library(shinydashboard)
-#library(praise)
-####
 basic=read.table("basicinfo.txt",header = TRUE,sep="",fileEncoding="UTF-8") ###正确
 basic$firstchuo=as.character(basic$firstchuo)
 
@@ -41,6 +29,71 @@ owing$firstchuo=as.character(owing$firstchuo)
 
 duotou=read.table("duotou.txt",header = TRUE,sep="",fileEncoding="UTF-8") ###正确
 duotou$firstchuo=as.character(duotou$firstchuo)
+
+channel=read.table("channel.txt",header = TRUE,sep="",fileEncoding="UTF-8",row.names = NULL) ###正确
+channel$first_login_time=as.character(channel$first_login_time)
+
+ceshi1=read.table("ceshi1.txt",header = TRUE,sep="",fileEncoding="UTF-8",row.names = NULL) ###正确
+
+###############渠道评估数据处理
+channeleva=read.table("channeleva.txt",header = TRUE,sep="",fileEncoding="UTF-8",row.names = NULL) ###正确
+channeleva$firstchuo=as.character(channeleva$firstchuo)
+channeleva1=channeleva[channeleva$sourcetype=="app" ,]
+#channeleva1=channeleva1[channeleva1$query1m!=-100,]
+channeleva2=channeleva[channeleva$sourcetype=="M",]
+
+
+app=channeleva1 %>% group_by(sourcename) %>% 
+summarise(num=n()) %>%
+subset(num>20)
+
+m=channeleva2 %>% group_by(sourcename) %>% 
+summarise(num=n()) %>%
+subset(num>20)
+
+channeleva1=merge(channeleva1,app,"sourcename")
+channeleva1$firstchuo=as.character(channeleva1$firstchuo)
+channeleva1$num=NULL
+####
+channeleva1$tcbin=cut(channeleva1$risk_score,breaks=c(0,20,40,60,80,100),include.lowest = TRUE,right = FALSE)
+channeleva1$umbin=cut(channeleva1$umeng_score,breaks=c(300,400,500,600,700,850))
+channeleva1$jdbin=cut(channeleva1$jdcredit_score,breaks=c(400,550,620,650,700,850))
+channeleva1$credit_bin[channeleva1$credit_bin>=10]="十及以上"
+channeleva1$cmaxbin=as.character(cut(channeleva1$cmax,breaks=c(0,3000,6000,10000,20000,50000,100000,1000000),include.lowest = TRUE,right = FALSE))
+channeleva1$omaxbin=as.character(cut(channeleva1$omax,breaks=c(0,5000,10000,20000,30000,50000,100000,10000000),include.lowest = TRUE,right = FALSE))
+channeleva1$bobin=as.character(cut(channeleva1$boappnum,breaks=c(0,1,2,5,10,20,500),include.lowest = TRUE,right = FALSE))
+channeleva1$tdbin1=as.character(cut(channeleva1$td_3m,breaks=c(0,1,2,5,10,20,50,100),include.lowest = TRUE,right = FALSE))
+channeleva1$tdbin2=as.character(cut(channeleva1$final_score,breaks=c(0,20,80,100),include.lowest = TRUE,right = FALSE))
+channeleva1$zxbin1=as.character(cut(channeleva1$query1m,breaks=c(0,1,2,5,10,20,50),include.lowest = TRUE,right = FALSE))
+channeleva1$defbin=as.character(cut(channeleva1$message_count_default,breaks=c(0,1,5,10,20,500),include.lowest = TRUE,right = FALSE))
+channeleva1$zxbin2=as.character(cut((channeleva1$hoverdue2y+channeleva1$coverdue2y+channeleva1$ooverdue2y),breaks=c(0,1,5,10,20,500),include.lowest = TRUE,right = FALSE))
+
+channeleva2=merge(channeleva2,m,"sourcename")
+channeleva2$firstchuo=as.character(channeleva2$firstchuo)
+channeleva2$num=NULL
+rm(app,m)
+###
+
+#ceshi1= channeleva1 %>% group_by(sourcename) %>%
+#summarise(edu=sum(edu %in% c("1硕士","2本科")&!is.na(edu))/sum(!is.na(edu)),
+#usertype=sum(usertype %in% c("4有额未发标","5纯新")&!is.na(usertype))/sum(!is.na(usertype)),
+#citylevel=sum(citylevel_bin %in% c("1线","2线")&!is.na(citylevel_bin))/sum(!is.na(citylevel_bin)),
+#bin=sum(credit_bin <=2&!is.na(credit_bin))/sum(!is.na(credit_bin)),
+#tc=sum(risk_score <=20&!is.na(risk_score))/sum(!is.na(risk_score)),
+#jd=sum(jdcredit_score >=700&!is.na(jdcredit_score))/sum(!is.na(jdcredit_score)),
+#um=sum(umeng_score >=700&!is.na(umeng_score))/sum(!is.na(umeng_score)),
+#cmax=sum(cmax >=50000&!is.na(cmax))/sum(!is.na(cmax)),
+#omax=sum(omax >=50000&!is.na(omax))/sum(!is.na(omax)),
+#pre=sum(pretax %in% c("05k-08k","08k-15k","15k-30k","30k+"))/n(),
+#bo=sum(boappnum<=1&boappnum>=0 &!is.na(boappnum))/sum(!is.na(boappnum)&boappnum>=0),
+#td1=sum(td_3m==0 &!is.na(td_3m))/sum(!is.na(td_3m)&td_3m>=0),
+#td2=sum(final_score<80 &final_score>=0&!is.na(final_score))/sum(!is.na(final_score)&final_score>=0),
+#zx1=sum(query1m<=1 &!is.na(query1m)&query1m>=0&query1m!=-1)/sum(!is.na(query1m)&query1m!=-100&query1m>=0),
+#def=sum(message_count_default==0 &!is.na(message_count_default))/sum(!is.na(message_count_default)&message_count_default>=0),
+#zx2=sum((hoverdue2y+coverdue2y+ooverdue2y)==0 &ooverdue2y!=-100&ooverdue2y!=-1&!is.na(hoverdue2y)&!is.na(coverdue2y)&!is.na(ooverdue2y))/sum(!is.na(hoverdue2y)&!is.na(coverdue2y)&ooverdue2y!=-1&!is.na(ooverdue2y)&ooverdue2y!=-100)
+#)
+#ceshi1[ceshi1=="NaN"]=NA
+######准备函数结束
 ##################基本信息
 
   selectedData1 <- reactive({
@@ -1002,7 +1055,187 @@ plot$yAxis(reversedStacks = FALSE)
 return(plot)    
 })
 
+############################################
+######渠道监控
+  selectedData7 <- reactive({
+  channel[as.Date(channel$first_login_time) >= min(input$dates8) & as.Date(channel$first_login_time) <= max(input$dates8),]
+  })
 
+##渠道全流程转化
+output$rate1 = renderDataTable({
+
+bo=selectedData7()[selectedData7()$sourcetype=="app",]
+app=bo %>% group_by(sourcename) %>% 
+summarise(num=n(),chuonum=sum(chuo_status),younum=sum(youe_status),
+chuoratio=round(sum(chuo_status)/n(),2),
+youratio=round(ifelse(sum(chuo_status)>0,sum(youe_status)/sum(chuo_status),0),2),
+fbratio=round(ifelse(sum(youe_status)>0,sum(fb_status)/sum(youe_status),0),2),
+zhratio=round(sum(cj_status)/n(),2),
+allzhratio=round(sum(allcj_status)/n(),2)) %>%
+subset(num>50)
+names(app)=c("app渠道名称","登录大额人数","戳额数","有额数","戳额率","有额率","确认率","大额转化率","整体转化率")
+#return(app)
+datatable(app,caption = 'APP渠道数据')
+})
+output$rate2 = renderDataTable({
+
+bo=selectedData7()[selectedData7()$sourcetype=="M",]
+m=bo %>% group_by(sourcename) %>% 
+summarise(num=n(),chuonum=sum(chuo_status),younum=sum(youe_status),
+chuoratio=round(sum(chuo_status)/n(),2),
+youratio=round(ifelse(sum(chuo_status)>0,sum(youe_status)/sum(chuo_status),0),2),
+fbratio=round(ifelse(sum(youe_status)>0,sum(fb_status)/sum(youe_status),0),2),
+zhratio=round(sum(cj_status)/n(),2),
+allzhratio=round(sum(allcj_status)/n(),2)) %>%
+subset(num>50)
+names(m)=c("app渠道名称","登录大额人数","戳额数","有额数","戳额率","有额率","确认率","大额转化率","整体转化率")
+#return(m)
+datatable(m,caption = 'M站渠道数据')
+
+})
+
+
+####app渠道
+
+  selectedData8 <- reactive({
+  channeleva1[as.Date(channeleva1$firstchuo) >= min(input$dates9) & as.Date(channeleva1$firstchuo) <= max(input$dates9),]
+  })
+##基本信息
+  selectedcolumn <- reactive({
+    switch(input$basic,
+           "edu" = data.frame(sourcename=selectedData8()$sourcename,edu=selectedData8()$edu),
+           "usertype"   = data.frame(sourcename=selectedData8()$sourcename,edu=selectedData8()$usertype),
+           "citylevel"  = data.frame(sourcename=selectedData8()$sourcename,edu=selectedData8()$citylevel_bin)
+           )
+  })
+  
+  selectedorder <- reactive({
+    switch(input$basic,
+           "edu" = ceshi1$sourcename[order(ceshi1$edu,decreasing=TRUE)],
+           "usertype"   = ceshi1$sourcename[order(ceshi1$usertype,decreasing=TRUE)],
+           "citylevel"  = ceshi1$sourcename[order(ceshi1$citylevel,decreasing=TRUE)]
+           )
+  })
+    
+output$plot61 <- renderChart2({
+#bo=selectedcolumn()[!is.na(selectedcolumn()$edu),]
+bo=data.frame(table(melt(selectedcolumn(),id=c("sourcename","edu"))))
+bo$sourcename <- factor(bo$sourcename,levels=selectedorder())
+plot <- hPlot(Freq~sourcename, data = bo,group = "edu",type = "column",title=sprintf("大额APP渠道%s分布",input$basic))
+plot$plotOptions(column = list(stacking = "percent"))
+plot$yAxis(reversedStacks = FALSE)
+return(plot)    
+})
+
+##模型类评分
+  selectedcolumn1 <- reactive({
+    switch(input$basic1,
+           "bin" = data.frame(sourcename=selectedData8()$sourcename,edu=selectedData8()$credit_bin),
+           "tengxun"   = data.frame(sourcename=selectedData8()$sourcename,edu=selectedData8()$tcbin),
+           "jd"  = data.frame(sourcename=selectedData8()$sourcename,edu=selectedData8()$jdbin),
+           "umeng"  = data.frame(sourcename=selectedData8()$sourcename,edu=selectedData8()$umbin)
+           )
+  })
+  
+  selectedorder1 <- reactive({
+    switch(input$basic1,
+           "bin" = ceshi1$sourcename[order(ceshi1$bin,decreasing=TRUE)],
+           "tengxun"   = ceshi1$sourcename[order(ceshi1$tc,decreasing=TRUE)],
+           "jd"  = ceshi1$sourcename[order(ceshi1$jd,decreasing=TRUE)],
+           "umeng"  = ceshi1$sourcename[order(ceshi1$um,decreasing=TRUE)]
+           )
+  })
+    
+output$plot62 <- renderChart2({
+#bo=selectedcolumn1()[!is.na(selectedcolumn1()$edu),]
+bo=data.frame(table(melt(selectedcolumn1(),id=c("sourcename","edu"))))
+bo$sourcename <- factor(bo$sourcename,levels=selectedorder1())
+plot <- hPlot(Freq~sourcename, data = bo,group = "edu",type = "column",title=sprintf("大额APP渠道%s分布",input$basic1))
+plot$plotOptions(column = list(stacking = "percent"))
+plot$yAxis(reversedStacks = FALSE)
+return(plot)    
+})
+
+##用户资质
+  selectedcolumn2 <- reactive({
+    switch(input$basic2,
+           "max creditcard limit" = data.frame(sourcename=selectedData8()$sourcename,edu=selectedData8()$cmaxbin),
+           "max otherloan limit"   = data.frame(sourcename=selectedData8()$sourcename,edu=selectedData8()$omaxbin),
+           "salary"  = data.frame(sourcename=selectedData8()$sourcename,edu=selectedData8()$pretax)
+           )
+  })
+  
+  selectedorder2 <- reactive({
+    switch(input$basic2,
+           "max creditcard limit" = ceshi1$sourcename[order(ceshi1$cmax,decreasing=TRUE)],
+           "max otherloan limit"   = ceshi1$sourcename[order(ceshi1$omax,decreasing=TRUE)],
+           "salary"  = ceshi1$sourcename[order(ceshi1$pre,decreasing=TRUE)],
+           )
+  })
+    
+output$plot63 <- renderChart2({
+#bo=selectedcolumn2()[!is.na(selectedcolumn2()$edu),]
+bo=data.frame(table(melt(selectedcolumn2(),id=c("sourcename","edu"))))
+bo$sourcename <- factor(bo$sourcename,levels=selectedorder2())
+plot <- hPlot(Freq~sourcename, data = bo,group = "edu",type = "column",title=sprintf("大额APP渠道%s分布",input$basic2))
+plot$plotOptions(column = list(stacking = "percent"))
+plot$yAxis(reversedStacks = FALSE)
+return(plot)    
+})
+
+##多头数据
+  selectedcolumn3 <- reactive({
+    switch(input$basic3,
+           "borrow app num" = data.frame(sourcename=selectedData8()$sourcename,edu=selectedData8()$bobin),
+           "tongdun_3m"   = data.frame(sourcename=selectedData8()$sourcename,edu=selectedData8()$tdbin1),
+           "tongdun_reject"  = data.frame(sourcename=selectedData8()$sourcename,edu=selectedData8()$tdbin2),
+           "credit report query_1m"  = data.frame(sourcename=selectedData8()$sourcename,edu=selectedData8()$zxbin1)
+           )
+  })
+  
+  selectedorder3 <- reactive({
+    switch(input$basic3,
+           "borrow app num" = ceshi1$sourcename[order(ceshi1$bo,decreasing=TRUE)],
+           "tongdun_3m"   = ceshi1$sourcename[order(ceshi1$td1,decreasing=TRUE)],
+           "tongdun_reject"  = ceshi1$sourcename[order(ceshi1$td2,decreasing=TRUE)],
+           "credit report query_1m"  = ceshi1$sourcename[order(ceshi1$zx1,decreasing=TRUE)],
+           )
+  })
+    
+output$plot64 <- renderChart2({
+#bo=selectedcolumn3()[!is.na(selectedcolumn3()$edu),]
+bo=data.frame(table(melt(selectedcolumn3(),id=c("sourcename","edu"))))
+bo$sourcename <- factor(bo$sourcename,levels=selectedorder3())
+plot <- hPlot(Freq~sourcename, data = bo,group = "edu",type = "column",title=sprintf("大额APP渠道%s分布",input$basic3))
+plot$plotOptions(column = list(stacking = "percent"))
+plot$yAxis(reversedStacks = FALSE)
+return(plot)    
+})
+
+##逾期数据
+  selectedcolumn4 <- reactive({
+    switch(input$basic4,
+           "overdue message count" = data.frame(sourcename=selectedData8()$sourcename,edu=selectedData8()$defbin),
+           "credit report overdue_2y"   = data.frame(sourcename=selectedData8()$sourcename,edu=selectedData8()$zxbin2)
+           )
+  })
+  
+  selectedorder4 <- reactive({
+    switch(input$basic4,
+           "overdue message count" = ceshi1$sourcename[order(ceshi1$def,decreasing=TRUE)],
+           "credit report overdue_2y"   = ceshi1$sourcename[order(ceshi1$zx2,decreasing=TRUE)]
+           )
+  })
+    
+output$plot65 <- renderChart2({
+#bo=selectedcolumn4()[!is.na(selectedcolumn4()$edu),]
+bo=data.frame(table(melt(selectedcolumn4(),id=c("sourcename","edu"))))
+bo$sourcename <- factor(bo$sourcename,levels=selectedorder4())
+plot <- hPlot(Freq~sourcename, data = bo,group = "edu",type = "column",title=sprintf("大额APP渠道%s分布",input$basic4))
+plot$plotOptions(column = list(stacking = "percent"))
+plot$yAxis(reversedStacks = FALSE)
+return(plot)    
+})
 
 ####################################################################################
 })
