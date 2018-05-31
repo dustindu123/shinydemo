@@ -1143,6 +1143,7 @@ datatable(m,caption = 'M站渠道数据')
            "citylevel"  = ceshi1$sourcename[order(ceshi1$citylevel,decreasing=TRUE)]
            )
   })
+  
     
 output$plot61 <- renderChart2({
 #bo=selectedcolumn()[!is.na(selectedcolumn()$edu),]
@@ -1150,7 +1151,8 @@ bo=data.frame(table(melt(selectedcolumn(),id=c("sourcename","edu"))))
 bo$sourcename <- factor(bo$sourcename,levels=selectedorder())
 plot <- hPlot(Freq~sourcename, data = bo,group = "edu",type = "column",title=sprintf("大额APP渠道%s分布",input$basic))
 plot$plotOptions(column = list(stacking = "percent"))
-plot$yAxis(reversedStacks = FALSE)
+if(input$basic!="usertype"){
+plot$yAxis(reversedStacks = FALSE)}
 return(plot)    
 })
 
@@ -1179,7 +1181,8 @@ bo=data.frame(table(melt(selectedcolumn1(),id=c("sourcename","edu"))))
 bo$sourcename <- factor(bo$sourcename,levels=selectedorder1())
 plot <- hPlot(Freq~sourcename, data = bo,group = "edu",type = "column",title=sprintf("大额APP渠道%s分布",input$basic1))
 plot$plotOptions(column = list(stacking = "percent"))
-plot$yAxis(reversedStacks = FALSE)
+if(input$basic1 %in% c("bin","tengxun")){
+plot$yAxis(reversedStacks = FALSE) }
 return(plot)    
 })
 
@@ -1206,7 +1209,6 @@ bo=data.frame(table(melt(selectedcolumn2(),id=c("sourcename","edu"))))
 bo$sourcename <- factor(bo$sourcename,levels=selectedorder2())
 plot <- hPlot(Freq~sourcename, data = bo,group = "edu",type = "column",title=sprintf("大额APP渠道%s分布",input$basic2))
 plot$plotOptions(column = list(stacking = "percent"))
-plot$yAxis(reversedStacks = FALSE)
 return(plot)    
 })
 
@@ -1305,14 +1307,14 @@ output$sp5<-renderPlot({
 output$sp6<-renderPlot({ 
       mm6=score %>% group_by(sourcename) %>%
       summarise(basicinfo=edu+city+usertype,
-      modelscore=(bin*2+tengxun*2+umeng*2+jd)/7,
+      model=(bin*2+tengxun*2+umeng*2+jd)/7,
       asset=salary+max_creditcard+max_otherloan,
       multiloan=boapp+tongdun+zx_query,
-      overdue=ovd_msg+overdue_zx )
+      ovd=ovd_msg+overdue_zx )
       
       
       
-      mm6=mm6[mm6$sourcename %in% input$spider,] %>% mutate_at(vars(basicinfo:overdue),funs(rescale))
+      mm6=mm6[mm6$sourcename %in% input$spider,] %>% mutate_at(vars(basicinfo:ovd),funs(rescale))
       rada=ggradar(mm6)
   return(rada)  
 })
