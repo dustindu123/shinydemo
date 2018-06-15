@@ -951,8 +951,8 @@ basic2=basic[basic$linetype =="小额",]
 basic3=basic[basic$linetype=="大额渠道",]
 
 
-basic1=basic1[basic1$rand %in% sample(0:999,500),]
-basic2=basic2[basic2$rand %in% sample(0:999,500),]
+basic1=basic1[basic1$rand %in% sample(0:999,450),]
+basic2=basic2[basic2$rand %in% sample(0:999,450),]
 basic=rbind(basic1,basic2,basic3)
 
 basic$userid=NULL
