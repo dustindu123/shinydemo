@@ -683,11 +683,18 @@ on a.userid=dx.userid
 
 
 #################################################################################
+options(java.parameters = "-Xmx8048m")
 source("D:/source/impala_connect.R")
 basic <- dbGetQuery(con, 
 "select  * 
-from appzc.dx_flowmonitor_basicinfo6"
+from appzc.dx_flowmonitor_basicinfo6 "
 )
+#basic2 <- dbGetQuery(con, 
+#"select  * 
+#from appzc.dx_flowmonitor_basicinfo6 where inserttime>='2018-05-20'"
+#)
+
+
 ##渠道各种率展示
 channel <- dbGetQuery(con, "select  * from appzc.dx_channelmonitor_basicinfo")
 
@@ -792,97 +799,97 @@ ceshi1[ceshi1=="NaN"]=NA
 score=function(data){
 
 ##基本信息打分
-data$edu_score=ifelse(data$edu=="1研究生",2,
-    ifelse(data$edu=="2本科",1,
-    ifelse(data$edu=="3专科"|is.na(data$edu),0,-1)))
+data$edu_score=ifelse(data$edu=="1研究生",5,
+    ifelse(data$edu=="2本科",4,
+    ifelse(data$edu=="3专科"|is.na(data$edu),3,1)))
 data$city_score=ifelse(data$citylevel_bin=="1线",2,
     ifelse(data$citylevel_bin=="2线",1,
     ifelse(data$citylevel_bin %in% c("3线","4线")|is.na(data$citylevel_bin),0,-1)))
 data$usertype_score=
-    ifelse(data$usertype=="5纯新",1,
-    ifelse(data$usertype=="4有额未发标",1.5,
-    ifelse(data$usertype=="2已成交"|is.na(data$usertype) ,0,
-    ifelse(data$usertype =="2发标未成交",-1,-2))))
+    ifelse(data$usertype=="5纯新",4,
+    ifelse(data$usertype=="4有额未发标",3,
+    ifelse(data$usertype=="2已成交"|is.na(data$usertype) ,1,
+    ifelse(data$usertype =="2发标未成交",1,0))))
 
 ##模型类评分
-data$bin_score=ifelse(data$credit_bin==1,3,
-    ifelse(data$credit_bin ==2,2,
-    ifelse(data$credit_bin ==3,1,
-    ifelse((data$credit_bin>3&data$credit_bin<=5)|is.na(data$credit_bin),0,
-    ifelse(data$credit_bin>5&data$credit_bin<=8,-1,-2)))))
+data$bin_score=ifelse(data$credit_bin==1,5,
+    ifelse(data$credit_bin ==2,4,
+    ifelse(data$credit_bin ==3,3,
+    ifelse((data$credit_bin>3&data$credit_bin<=5)|is.na(data$credit_bin),2,
+    ifelse(data$credit_bin>5&data$credit_bin<=8,1,0)))))
     
-data$tc_score=ifelse(data$risk_score>0&data$risk_score<=20,2,
-    ifelse(data$risk_score>20&data$risk_score<=40,1,
-    ifelse((data$risk_score>40&data$risk_score<=60)|is.na(data$risk_score),0,
-    ifelse(data$risk_score>60&data$risk_score<=80,-1,-2))))
+data$tc_score=ifelse(data$risk_score>0&data$risk_score<=20,4,
+    ifelse(data$risk_score>20&data$risk_score<=40,3,
+    ifelse((data$risk_score>40&data$risk_score<=60)|is.na(data$risk_score),2,
+    ifelse(data$risk_score>60&data$risk_score<=80,1,0))))
     
-data$um_score=ifelse(data$umeng_score>800&data$umeng_score<=850,2,
-    ifelse(data$umeng_score>700&data$umeng_score<=800,1,
-    ifelse((data$umeng_score>600&data$umeng_score<=700)|is.na(data$umeng_score),0,
-    ifelse(data$umeng_score>500&data$umeng_score<=600,-1,
-    ifelse(data$umeng_score>400&data$umeng_score<=500,-1.5,-2)))))
+data$um_score=ifelse(data$umeng_score>800&data$umeng_score<=850,4,
+    ifelse(data$umeng_score>700&data$umeng_score<=800,4,
+    ifelse((data$umeng_score>600&data$umeng_score<=700)|is.na(data$umeng_score),3,
+    ifelse(data$umeng_score>500&data$umeng_score<=600,2,
+    ifelse(data$umeng_score>400&data$umeng_score<=500,1,0)))))
     
-data$jd_score=ifelse(data$jdcredit_score>700&data$jdcredit_score<=850,2,
-    ifelse(data$jdcredit_score>650&data$jdcredit_score<=700,1,
-    ifelse((data$jdcredit_score>620&data$jdcredit_score<=650)|is.na(data$jdcredit_score),0,
-    ifelse(data$jdcredit_score>560&data$jdcredit_score<=620,-1,-2))))
+data$jd_score=ifelse(data$jdcredit_score>700&data$jdcredit_score<=850,4,
+    ifelse(data$jdcredit_score>650&data$jdcredit_score<=700,3,
+    ifelse((data$jdcredit_score>620&data$jdcredit_score<=650)|is.na(data$jdcredit_score),2,
+    ifelse(data$jdcredit_score>560&data$jdcredit_score<=620,1,0))))
     
 ##用户资质
 
-data$cmax_score=ifelse(data$cmax>=100000,3,
-    ifelse(data$cmax>=50000&data$cmax<100000,2,
-    ifelse(data$cmax>=20000&data$cmax<50000 ,1,
-    ifelse((data$cmax>=10000&data$cmax<20000)|is.na(data$cmax),0,
-    ifelse(data$cmax>=6000&data$cmax<10000,-1,-2)))))
+data$cmax_score=ifelse(data$cmax>=100000,6,
+    ifelse(data$cmax>=50000&data$cmax<100000,5,
+    ifelse(data$cmax>=20000&data$cmax<50000 ,4,
+    ifelse((data$cmax>=10000&data$cmax<20000)|is.na(data$cmax),2,
+    ifelse(data$cmax>=6000&data$cmax<10000,1,0)))))
 
-data$omax_score=ifelse(data$omax>=100000,3,
-    ifelse(data$omax>=50000&data$omax<100000,2,
-    ifelse(data$omax>=20000&data$omax<50000 ,1,
-    ifelse((data$omax>=10000&data$omax<20000)|is.na(data$omax),0,
-    ifelse(data$omax>=6000&data$omax<10000,-1,-2)))))
+data$omax_score=ifelse(data$omax>=100000,5,
+    ifelse(data$omax>=50000&data$omax<100000,4,
+    ifelse(data$omax>=20000&data$omax<50000 ,3,
+    ifelse((data$omax>=10000&data$omax<20000)|is.na(data$omax),1,
+    ifelse(data$omax>=6000&data$omax<10000,0,0)))))
 
-data$pre_score=ifelse(data$pretax=="30k+",3,
-    ifelse(data$pretax=="15k-30k",2,
-    ifelse(data$pretax=="08k-15k",1,
-    ifelse(data$pretax=="05k-08k",0,
-    ifelse(data$pretax=="missing",0,
-    ifelse(data$pretax=="02k-05k",-1,
-    ifelse(data$pretax=="0-02k",-2,-3)))))))
+data$pre_score=ifelse(data$pretax=="30k+",6,
+    ifelse(data$pretax=="15k-30k",5,
+    ifelse(data$pretax=="08k-15k",4,
+    ifelse(data$pretax=="05k-08k",3,
+    ifelse(data$pretax=="missing",2,
+    ifelse(data$pretax=="02k-05k",2,
+    ifelse(data$pretax=="0-02k",0,0)))))))
     
 ##多头数据
 
-data$bo_score=ifelse(data$boappnum==0,2,
-    ifelse(data$boappnum>0&data$boappnum<=1,1,
-    ifelse(data$boappnum>1&data$boappnum<=5 |is.na(data$boappnum),0,
-    ifelse(data$boappnum>5&data$boappnum<=10 ,-1,
-    ifelse(data$boappnum>10&data$boappnum<=20,-2,-3)))))
+data$bo_score=ifelse(data$boappnum==0,4,
+    ifelse(data$boappnum>0&data$boappnum<=1,3,
+    ifelse(data$boappnum>1&data$boappnum<=5 |is.na(data$boappnum),2,
+    ifelse(data$boappnum>5&data$boappnum<=10 ,1,
+    ifelse(data$boappnum>10&data$boappnum<=20,0,0)))))
 
-data$td_score=ifelse(data$td_3m==0,2,
-    ifelse(data$td_3m>0&data$td_3m<=1,1,
-    ifelse((data$td_3m>1&data$td_3m<=5 )|is.na(data$td_3m),0,
-    ifelse(data$td_3m>5&data$td_3m<=10 ,-1,
-    ifelse(data$td_3m>10&data$td_3m<=20,-2,-3)))))
+data$td_score=ifelse(data$td_3m==0,4,
+    ifelse(data$td_3m>0&data$td_3m<=1,3,
+    ifelse((data$td_3m>1&data$td_3m<=5 )|is.na(data$td_3m),2,
+    ifelse(data$td_3m>5&data$td_3m<=10 ,1,
+    ifelse(data$td_3m>10&data$td_3m<=20,0,0)))))
     
-data$zx1_score=ifelse(data$query1m==0,2,
-    ifelse(data$query1m>0&data$query1m<=1,1,
-    ifelse((data$query1m>1&data$query1m<=5 )|is.na(data$query1m),0,
-    ifelse(data$query1m>5&data$query1m<=10 ,-1,
-    ifelse(data$query1m>10&data$query1m<=20,-2,-3)))))
+data$zx1_score=ifelse(data$query1m==0,4,
+    ifelse(data$query1m>0&data$query1m<=1,3,
+    ifelse((data$query1m>1&data$query1m<=5 )|is.na(data$query1m),2,
+    ifelse(data$query1m>5&data$query1m<=10 ,1,
+    ifelse(data$query1m>10&data$query1m<=20,0,0)))))
 
 ##逾期数据
 
-data$msg_score=ifelse(data$message_count_default==0,2,
-    ifelse(data$message_count_default>0&data$message_count_default<5,1,
-    ifelse((data$message_count_default>=5&data$message_count_default<10) |is.na(data$message_count_default),0,
-    ifelse(data$message_count_default>=10&data$message_count_default<20,-1,-2))))
+data$msg_score=ifelse(data$message_count_default==0,3,
+    ifelse(data$message_count_default>0&data$message_count_default<5,2,
+    ifelse((data$message_count_default>=5&data$message_count_default<10) |is.na(data$message_count_default),1,
+    ifelse(data$message_count_default>=10&data$message_count_default<20,0,-1))))
 
 
-data$zx2_score=ifelse((data$hoverdue2y+data$coverdue2y+data$ooverdue2y)==0&data$hoverdue2y>-1&data$coverdue2y>-1&data$ooverdue2y>-1,2,
-    ifelse((data$hoverdue2y+data$coverdue2y+data$ooverdue2y)>0&(data$hoverdue2y+data$coverdue2y+data$ooverdue2y)<5&data$hoverdue2y>-1&data$coverdue2y>-1&data$ooverdue2y>-1,1,
-    ifelse(((data$hoverdue2y+data$coverdue2y+data$ooverdue2y)>=5&(data$hoverdue2y+data$coverdue2y+data$ooverdue2y)<10&data$hoverdue2y>-1&data$coverdue2y>-1&data$ooverdue2y>-1 )|(data$hoverdue2y==-1|data$coverdue2y==-1|data$ooverdue2y==-1 ),0,
-    ifelse((data$hoverdue2y+data$coverdue2y+data$ooverdue2y)>=10&(data$hoverdue2y+data$coverdue2y+data$ooverdue2y)<20&data$hoverdue2y>-1&data$coverdue2y>-1&data$ooverdue2y>-1 ,-1,-2))))
+data$zx2_score=ifelse((data$hoverdue2y+data$coverdue2y+data$ooverdue2y)==0&data$hoverdue2y>-1&data$coverdue2y>-1&data$ooverdue2y>-1,4,
+    ifelse((data$hoverdue2y+data$coverdue2y+data$ooverdue2y)>0&(data$hoverdue2y+data$coverdue2y+data$ooverdue2y)<5&data$hoverdue2y>-1&data$coverdue2y>-1&data$ooverdue2y>-1,2,
+    ifelse(((data$hoverdue2y+data$coverdue2y+data$ooverdue2y)>=5&(data$hoverdue2y+data$coverdue2y+data$ooverdue2y)<10&data$hoverdue2y>-1&data$coverdue2y>-1&data$ooverdue2y>-1 )|(data$hoverdue2y==-1|data$coverdue2y==-1|data$ooverdue2y==-1 ),1,
+    ifelse((data$hoverdue2y+data$coverdue2y+data$ooverdue2y)>=10&(data$hoverdue2y+data$coverdue2y+data$ooverdue2y)<20&data$hoverdue2y>-1&data$coverdue2y>-1&data$ooverdue2y>-1 ,0,-1))))
     
-data=data[,c(2,41:55)]    
+data=data[,c(2,41:55)]   
 return(data)
     }
 fscore=score(channeleva[channeleva$sourcetype=="app"&channeleva$sourcename %in% ceshi1$sourcename,])

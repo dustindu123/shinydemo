@@ -1272,42 +1272,42 @@ return(plot)
 output$sp1<-renderPlot({ 
       mm1=subset(score,select=sourcename:usertype)
       mm1=mm1[mm1$sourcename %in% input$spider,] %>% mutate_at(vars(edu:usertype),funs(rescale))
-      rada=ggradar(mm1)
+      rada=ggradar(mm1,axis.label.size = 5,legend.text.size = 16)
   return(rada)  
 })
 
 output$sp2<-renderPlot({ 
       mm2=score[,c(1,5:8)]
       mm2=mm2[mm2$sourcename %in% input$spider,] %>% mutate_at(vars(bin:jd),funs(rescale))
-      rada=ggradar(mm2)
+      rada=ggradar(mm2,axis.label.size = 5,legend.text.size = 16)
   return(rada)  
 })
 
 output$sp3<-renderPlot({ 
       mm3=score[,c(1,9:11)]
       mm3=mm3[mm3$sourcename %in% input$spider,] %>% mutate_at(vars(max_creditcard:salary),funs(rescale))
-      rada=ggradar(mm3)
+      rada=ggradar(mm3,axis.label.size = 5,legend.text.size = 16)
   return(rada)  
 })
 
 output$sp4<-renderPlot({ 
       mm4=score[,c(1,12:14)]
       mm4=mm4[mm4$sourcename %in% input$spider,] %>% mutate_at(vars(boapp:zx_query),funs(rescale))
-      rada=ggradar(mm4)
+      rada=ggradar(mm4,axis.label.size = 5,legend.text.size = 16)
   return(rada)  
 })
 
 output$sp5<-renderPlot({ 
       mm5=score[,c(1,15:16)]
       mm5=mm5[mm5$sourcename %in% input$spider,] %>% mutate_at(vars(ovd_msg:overdue_zx),funs(rescale))
-      rada=ggradar(mm5)
+      rada=ggradar(mm5,axis.label.size = 5,legend.text.size = 16)
   return(rada)  
 })
 ######
 output$sp6<-renderPlot({ 
       mm6=score %>% group_by(sourcename) %>%
       summarise(basicinfo=edu+city+usertype,
-      model=(bin*2+tengxun*2+umeng*2+jd)/7,
+      model=(bin*2+tengxun*1+umeng*1+jd)/5,
       asset=salary+max_creditcard+max_otherloan,
       multiloan=boapp+tongdun+zx_query,
       ovd=ovd_msg+overdue_zx )
@@ -1315,7 +1315,7 @@ output$sp6<-renderPlot({
       
       
       mm6=mm6[mm6$sourcename %in% input$spider,] %>% mutate_at(vars(basicinfo:ovd),funs(rescale))
-      rada=ggradar(mm6)
+      rada=ggradar(mm6,axis.label.size = 7,legend.text.size = 16)
   return(rada)  
 })
 
