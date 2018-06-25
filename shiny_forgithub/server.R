@@ -757,7 +757,7 @@ if(input$mode4!="line type"){
 bo$linetype <- factor(bo$linetype,levels=c("gjj","wb","bb","tb","oth"))
 }
 
-plot <- hPlot(num~linetype, data = bo,group = "bobin",type = "column",title="逾期短信数分布(大额渠道VS大额主营VS小额)")
+plot <- hPlot(Freq~linetype, data = bo,group = "bobin",type = "column",title="逾期短信数分布(大额渠道VS大额主营VS小额)")
 plot$plotOptions(column = list(stacking = "percent"))
 plot$yAxis(reversedStacks = FALSE)
 return(plot)    
