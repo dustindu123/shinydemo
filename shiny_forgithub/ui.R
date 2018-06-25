@@ -90,7 +90,7 @@ tabItems(
               hr(),
               width = 12
                ),
-        
+          box(selectInput('mode1',h3('筛选比较内容'), c("mode type","line type")),width = 12),
           box(showOutput("plot10","highcharts")),
           box(showOutput("plot1","highcharts")),
           box(showOutput("plot4","highcharts")),
@@ -122,6 +122,7 @@ tabItems(
               hr(),
               width = 12
                ),
+          box(selectInput('mode2',h3('筛选比较内容'), c("mode type","line type")),width = 12),
           box(showOutput("plot13","highcharts")),
           box(showOutput("plot16","highcharts")),
           box(showOutput("plot19","highcharts")),
@@ -149,6 +150,7 @@ tabItems(
               hr(),
               width = 12
                ),
+          box(selectInput('mode3',h3('筛选比较内容'), c("mode type","line type")),width = 12),
           box(showOutput("plot25","highcharts")),
           box(showOutput("plot26","highcharts")),
           box(showOutput("plot27","highcharts"))
@@ -170,6 +172,7 @@ tabItems(
               hr(),
               width = 12
                ),
+          box(selectInput('mode5',h3('筛选比较内容'), c("mode type","line type")),width = 12),
           box(showOutput("plot43","highcharts")),
           box(showOutput("plot46","highcharts")),
           box(showOutput("plot49","highcharts")),   
@@ -194,6 +197,7 @@ tabItems(
               hr(),
               width = 12
                ),
+          box(selectInput('mode6',h3('筛选比较内容'), c("mode type","line type")),width = 12),
           box(showOutput("plot52","highcharts")),
           box(showOutput("plot55","highcharts")),
           box(showOutput("plot58","highcharts")),   
@@ -218,6 +222,7 @@ tabItems(
               h3("筛选时间,查看不同时间段内的各维度信息。"),
               hr(),
               width = 12               ),
+          box(selectInput('mode4',h3('筛选比较内容'), c("mode type","line type")),width = 12),
           box(showOutput("plot28","highcharts")),
           box(showOutput("plot31","highcharts")),
           box(showOutput("plot34","highcharts")),   

@@ -168,6 +168,7 @@ select
     /*gender, */
     edu_cert,
     edu,
+    chuomode,
     message_count_default,
     boappnum,
     linetype
@@ -187,10 +188,17 @@ select
     /*gender, */
     mmv.edu_cert,
     message_count_default,
+    
     boappnum,
-    case when edu_cert='1' then '1研究生' /* 研究生*/
-         when edu_cert='2' then '2本科' /* 本科*/
-         when edu_cert='3' then '3专科' /* 专科*/
+    
+    case when first_chuo_mark like '%wb%' then 'wb'
+         when first_chuo_mark like '%tb%' then 'tb'
+         when first_chuo_mark like '%bb%' then 'bb'
+         when first_chuo_mark like '%fd%' then 'gjj'
+         else 'oth' end as chuomode,    
+    case when mmv.edu_cert='1' then '1研究生' /* 研究生*/
+         when mmv.edu_cert='2' then '2本科' /* 本科*/
+         when mmv.edu_cert='3' then '3专科' /* 专科*/
          else '4无学历' end as edu, 
     case when b.userid is not null then '大额渠道' else '大额主营' end as linetype,
     ROW_NUMBER()over(partition by mmv.userid order by mmv.inserttime asc) as flag
@@ -227,6 +235,7 @@ select
     /*gender, */
     edu_cert,
     edu,
+    chuomode,
     message_count_default,
     boappnum,
     '小额' as linetype
@@ -247,9 +256,15 @@ select
     mmv.edu_cert,
     message_count_default,
     boappnum,
-    case when edu_cert='1' then '1研究生' /* 研究生*/
-         when edu_cert='2' then '2本科' /* 本科*/
-         when edu_cert='3' then '3专科' /* 专科*/
+    case when first_chuo_mark like '%wb%' then 'wb'
+         when first_chuo_mark like '%tb%' then 'tb'
+         when first_chuo_mark like '%bb%' then 'bb'
+         when first_chuo_mark like '%fd%' then 'gjj'
+         else 'oth' end as chuomode,        
+    
+    case when mmv.edu_cert='1' then '1研究生' /* 研究生*/
+         when mmv.edu_cert='2' then '2本科' /* 本科*/
+         when mmv.edu_cert='3' then '3专科' /* 专科*/
          else '4无学历' end as edu, 
     ROW_NUMBER()over(partition by mmv.userid order by mmv.inserttime asc) as flag
     
@@ -566,119 +581,7 @@ and json_flow_count='2' )b where flag=1 ) ly )ys  where flag1=1 )tt
 on dx.userid=tt.userid;
 
 
---######################################渠道评估###############
-drop table if exists appzc.dx_channelmonitor_basicinfo;
-create table appzc.dx_channelmonitor_basicinfo
-as
 
-select 
-sourcename,
-sourcefeature,
-case when sourcefeature rlike '[0-9]' then 'app' else 'M' end as sourcetype,
-a.userid,
-to_date(a.first_login_time) as first_login_time,
-a.first_login_usertype,
-chuo_status,
-a.first_chuo_bin,
-youe_status,
-fb_status,
-cj_status,
-allcj_status
-
-from 
-appzc.dx_datatable_chuo  a
-
-inner join [shuffle]
-appzc.dx_dae_user_det b on a.userid=b.userid
-where log_status=1;
-
-      
-drop table if exists appzc.dx_channelmonitor_showrate;
-create table appzc.dx_channelmonitor_showrate
-as
-select sourcename,sourcetype ,count(*) as loginnum ,sum(a.chuo_status) as chuonum,sum(a.youe_status) as younum,
-cast(sum(a.chuo_status)/count(*) as decimal(32,4)) as chuoratio,
-cast(case when sum(a.chuo_status) >0 then sum(a.youe_status)/sum(a.chuo_status) else 0 end as decimal(32,4))as youeratio,
-cast(case when sum(a.youe_status) >0 then sum(fb_status)/sum(a.youe_status) else 0 end as decimal(32,4)) fbratio, 
-cast(sum(cj_status)/count(*) as decimal(32,4)) as zhratio,
-cast(sum(allcj_status)/count(*) as decimal(32,4))as allzhratio
-from appzc.dx_channelmonitor_basicinfo a 
-group by sourcename,sourcetype ; 
-
-
-
-
-
-/*left join [shuffle] 
-(
-select userid,max(month_between_3) as month_between_3,max(month_between_6) as month_between_6,max(month_between_1) as month_between_1
-from 
-(
-
-select userid,sum(month_between_3) as month_between_3,sum(month_between_6) as month_between_6, sum(month_between_1) as month_between_1, count(*) as total
-from 
-(
-
-    select userid,batchno, 
-           case when month_between<=3 then 1 
-                else 0 end as month_between_3,
-           case when month_between<=6 then 1 
-                else 0 end as month_between_6,
-           case when month_between<=1 then 1 
-                else 0 end as month_between_1,
-          
-           dense_rank()over(partition by userid order by batchno desc) flag
-
-          from  
-          (select t1.*,report_create_time,
-           int_months_between(concat(substr(report_create_time,1,4),'-',substr(report_create_time,6,2),'-',substr(report_create_time,9,2)), concat(substr(Query_Date,1,4),'-',substr(Query_Date,6,2),'-',substr(Query_Date,9,2))) as month_between 
-            from 
-            ods.CRD_QR_RECORDDTLINFO t1               
-            left join
-            (select distinct batchno,report_create_time from ods.crd_hd_report) t2 
-             on t1.batchno=t2.batchno
-             where Query_Reason not like '%本人%' or Query_Reason not like '%个人%'  or Query_Reason not like '%贷后%'
-               
-               ) t )dx
-where flag=1
-group by userid 
-
-union all
-
-select userid ,sum(month_between_3) as month_between_3,sum(month_between_6) as month_between_6 ,sum(month_between_1) as month_between_1,count(*) as total
-from 
-(
-    select userid,token,
-           case when month_between<=3 then 1 
-                else 0 end as month_between_3,
-           case when month_between<=6 then 1 
-                else 0 end as month_between_6,
-           case when month_between<=1 then 1 
-                else 0 end as month_between_1,
-                     
-           dense_rank() over(partition by userid order by token desc) flag 
-           
- 
-    from (
-    select 
-    distinct userid,t1.token,
-    orders,`date`,person, note,strleft(inserttime,10) insertdate,
-    int_months_between(reportdate,strleft(`date`,10)) as month_between 
-    from ods.rhzx_user_inquirydetails t1
-    left join 
-    (select distinct token,strleft(reportdate,10) as reportdate from ods.rhzx_user_information) t2 
-    on t1.token=t2.token
-    where `type`=1
-    
-    )b ) dx 
-where flag=1 
-group by userid  ) d 
-group by userid )dx
-on a.userid=dx.userid
-
-
-
-*/
 
 
 
@@ -889,7 +792,7 @@ data$zx2_score=ifelse((data$hoverdue2y+data$coverdue2y+data$ooverdue2y)==0&data$
     ifelse(((data$hoverdue2y+data$coverdue2y+data$ooverdue2y)>=5&(data$hoverdue2y+data$coverdue2y+data$ooverdue2y)<10&data$hoverdue2y>-1&data$coverdue2y>-1&data$ooverdue2y>-1 )|(data$hoverdue2y==-1|data$coverdue2y==-1|data$ooverdue2y==-1 ),1,
     ifelse((data$hoverdue2y+data$coverdue2y+data$ooverdue2y)>=10&(data$hoverdue2y+data$coverdue2y+data$ooverdue2y)<20&data$hoverdue2y>-1&data$coverdue2y>-1&data$ooverdue2y>-1 ,0,-1))))
     
-data=data[,c(2,41:55)]   
+data=data[,c(2,42:56)]   
 return(data)
     }
 fscore=score(channeleva[channeleva$sourcetype=="app"&channeleva$sourcename %in% ceshi1$sourcename,])
@@ -951,19 +854,19 @@ basic2=basic[basic$linetype =="小额",]
 basic3=basic[basic$linetype=="大额渠道",]
 
 
-basic1=basic1[basic1$rand %in% sample(0:999,450),]
-basic2=basic2[basic2$rand %in% sample(0:999,450),]
+basic1=basic1[basic1$rand %in% sample(0:999,500),]
+basic2=basic2[basic2$rand %in% sample(0:999,500),]
 basic=rbind(basic1,basic2,basic3)
 
 basic$userid=NULL
 basic$rand=NULL
 
-basicinfo=basic[,c(2,3,4,5,8,9,10,27,28)]
-model=basic[,c(1,2,3,8,10,11,12)]
-salary=basic[,c(2,3,8,13)]
-duotou=basic[,c(2,3,6,7,8,14,15,16)]
-zizhi=basic[,c(2,3,8,17,18,19)]
-owing=basic[,c(2,3,8,20,21,22)]
+basicinfo=basic[,c(2,3,5,6,9,10,28,29)]
+model=basic[,c(1,2,3,6,8,9,11,12,13)]
+salary=basic[,c(2,3,6,9,14)]
+duotou=basic[,c(2,3,6,7,8,9,15,16,17)]
+zizhi=basic[,c(2,3,6,9,18,19,20)]
+owing=basic[,c(2,3,6,9,21,22,23)]
 
 
 ##

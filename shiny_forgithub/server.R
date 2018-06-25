@@ -126,6 +126,16 @@ rm(app,m)
   selectedData1 <- reactive({
   basic[as.Date(basic$firstchuo) >= min(input$dates2) & as.Date(basic$firstchuo) <= max(input$dates2),]
   })
+
+  ##用户资质
+  column <- reactive({
+    switch(input$mode1,
+           "line type" = which(names(selectedData1())=="linetype"),
+           "mode type"   = which(names(selectedData1())=="chuomode")
+           )
+  })
+
+
   
 ####学历分布
 ##大额渠道VS大额主营VS小额
@@ -133,7 +143,11 @@ output$plot10 <- renderChart2({
 
 edu=selectedData1()
 #edu=edu %>% group_by(linetype,edu) %>% summarise(num=n()) 
-edu=data.frame(table(melt(data.frame(linetype=edu$linetype,edu=edu$edu),id=c("linetype","edu"))))
+edu=data.frame(table(melt(data.frame(linetype=edu[,column()],edu=edu$edu),id=c("linetype","edu"))))
+if(input$mode1!="line type"){
+edu$linetype <- factor(edu$linetype,levels=c("gjj","wb","bb","tb","oth"))
+}
+
 plot <- hPlot(Freq~linetype, data = edu,group = "edu",type = "column",title="学历分布(大额渠道VS大额主营VS小额)")
 plot$plotOptions(column = list(stacking = "percent"))
 plot$yAxis(reversedStacks = FALSE)
@@ -144,6 +158,7 @@ output$plot11 <- renderChart2({
 
 edu=selectedData1()[selectedData1()$linetype=="大额渠道",]
 #edu=edu%>% group_by(week,edu) %>% summarise(num=n())
+
 edu=data.frame(table(melt(data.frame(week=edu$week,edu=edu$edu),id=c("week","edu"))))
 plot <- hPlot(Freq~week, data = edu,
               group = "edu",
@@ -172,7 +187,11 @@ output$plot1 <- renderChart2({
 
 age=selectedData1()[is.na(selectedData1()$age_bin)==FALSE,]
 #age=age %>% group_by(linetype,age_bin) %>% summarise(num=n())
-age=data.frame(table(melt(data.frame(linetype=age$linetype,age_bin=age$age_bin),id=c("linetype","age_bin")))) 
+age=data.frame(table(melt(data.frame(linetype=age[,column()],age_bin=age$age_bin),id=c("linetype","age_bin")))) 
+if(input$mode1!="line type"){
+age$linetype <- factor(age$linetype,levels=c("gjj","wb","bb","tb","oth"))
+}
+
 plot <- hPlot(Freq~linetype, data = age,
               group = "age_bin",
               type = "column",title="年龄分布(大额渠道VS大额主营VS小额)")
@@ -210,7 +229,11 @@ output$plot4 <- renderChart2({
 
 usertype=selectedData1()
 #usertype=usertype %>% group_by(linetype,usertype) %>% summarise(num=n())
-usertype=data.frame(table(melt(data.frame(linetype=usertype$linetype,usertype=usertype$usertype),id=c("linetype","usertype")))) 
+usertype=data.frame(table(melt(data.frame(linetype=usertype[,column()],usertype=usertype$usertype),id=c("linetype","usertype")))) 
+if(input$mode1!="line type"){
+usertype$linetype <- factor(usertype$linetype,levels=c("gjj","wb","bb","tb","oth"))
+}
+
 plot <- hPlot(Freq~linetype, data = usertype,group = "usertype",type = "column",title="人群类型分布(大额渠道VS大额主营VS小额)")
 plot$plotOptions(column = list(stacking = "percent"))
 return(plot)    
@@ -241,8 +264,13 @@ return(plot)
 output$plot7 <- renderChart2({
 
 citylevel=selectedData1()
-citylevel=citylevel %>% group_by(linetype,citylevel_bin) %>% summarise(num=n()) 
-plot <- hPlot(num~linetype, data = citylevel,group = "citylevel_bin",type = "column",title="城市等级分布(大额渠道VS大额主营VS小额)")
+#citylevel=citylevel %>% group_by(linetype,citylevel_bin) %>% summarise(num=n())
+citylevel=data.frame(table(melt(data.frame(linetype=citylevel[,column()],citylevel_bin=citylevel$citylevel_bin),id=c("linetype","citylevel_bin")))) 
+if(input$mode1!="line type"){
+citylevel$linetype <- factor(citylevel$linetype,levels=c("gjj","wb","bb","tb","oth"))
+}
+
+plot <- hPlot(Freq~linetype, data = citylevel,group = "citylevel_bin",type = "column",title="城市等级分布(大额渠道VS大额主营VS小额)")
 plot$plotOptions(column = list(stacking = "percent"))
 plot$yAxis(reversedStacks = FALSE)
 return(plot)    
@@ -275,6 +303,12 @@ return(plot)
   model[as.Date(model$firstchuo) >= min(input$dates3) & as.Date(model$firstchuo) <= max(input$dates3),]
   })
 
+  column2 <- reactive({
+    switch(input$mode2,
+           "line type" = which(names(selectedData2())=="linetype"),
+           "mode type"   = which(names(selectedData2())=="chuomode")
+           )
+  })
 ####模型bin
 ##大额渠道VS大额主营VS小额
 output$plot13 <- renderChart2({
@@ -282,8 +316,13 @@ bin=selectedData2()
 bin=bin[!is.na(bin$credit_bin),]
 bin$credit_bin[bin$credit_bin>=10]="十及以上"
 bin$credit_bin=paste("bin",bin$credit_bin,sep="")
-bin=bin %>% group_by(linetype,credit_bin) %>% summarise(num=n()) 
-plot <- hPlot(num~linetype, data = bin,group = "credit_bin",type = "column",title="模型bin分布(大额渠道VS大额主营VS小额)")
+#bin=bin %>% group_by(linetype,credit_bin) %>% summarise(num=n()) 
+bin=data.frame(table(melt(data.frame(linetype=bin[,column2()],credit_bin=bin$credit_bin),id=c("linetype","credit_bin"))))
+if(input$mode2!="line type"){
+bin$linetype <- factor(bin$linetype,levels=c("gjj","wb","bb","tb","oth"))
+}
+
+plot <- hPlot(Freq~linetype, data = bin,group = "credit_bin",type = "column",title="模型bin分布(大额渠道VS大额主营VS小额)")
 plot$plotOptions(column = list(stacking = "percent"))
 plot$yAxis(reversedStacks = FALSE)
 return(plot)    
@@ -320,8 +359,13 @@ output$plot16 <- renderChart2({
 tc=selectedData2()
 tc=tc[!is.na(tc$risk_score),]
 tc$tcbin=cut(tc$risk_score,breaks=c(0,20,40,60,80,100),include.lowest = TRUE,right = FALSE)
-tc=tc %>% group_by(linetype,tcbin) %>% summarise(num=n()) 
-plot <- hPlot(num~linetype, data = tc,group = "tcbin",type = "column",title="腾讯分分布(大额渠道VS大额主营VS小额)")
+#tc=tc %>% group_by(linetype,tcbin) %>% summarise(num=n()) 
+tc=data.frame(table(melt(data.frame(linetype=tc[,column2()],tcbin=tc$tcbin),id=c("linetype","tcbin"))))
+if(input$mode2!="line type"){
+tc$linetype <- factor(tc$linetype,levels=c("gjj","wb","bb","tb","oth"))
+}
+
+plot <- hPlot(Freq~linetype, data = tc,group = "tcbin",type = "column",title="腾讯分分布(大额渠道VS大额主营VS小额)")
 plot$plotOptions(column = list(stacking = "percent"))
 plot$yAxis(reversedStacks = FALSE)
 return(plot)    
@@ -356,8 +400,13 @@ output$plot19 <- renderChart2({
 um=selectedData2()
 um=um[!is.na(um$umeng_score),]
 um$umbin=cut(um$umeng_score,breaks=c(300,400,500,600,700,850))
-um=um %>% group_by(linetype,umbin) %>% summarise(num=n()) 
-plot <- hPlot(num~linetype, data = um,group = "umbin",type = "column",title="友盟分分布(大额渠道VS大额主营VS小额)")
+#um=um %>% group_by(linetype,umbin) %>% summarise(num=n()) 
+um=data.frame(table(melt(data.frame(linetype=um[,column2()],umbin=um$umbin),id=c("linetype","umbin"))))
+if(input$mode2!="line type"){
+um$linetype <- factor(um$linetype,levels=c("gjj","wb","bb","tb","oth"))
+}
+
+plot <- hPlot(Freq~linetype, data = um,group = "umbin",type = "column",title="友盟分分布(大额渠道VS大额主营VS小额)")
 plot$plotOptions(column = list(stacking = "percent"))
 return(plot)    
 }) 
@@ -390,8 +439,14 @@ output$plot22 <- renderChart2({
 jd=selectedData2()
 jd=jd[!is.na(jd$jdcredit_score),]
 jd$jdbin=cut(jd$jdcredit_score,breaks=c(400,550,620,650,700,850))
-jd=jd %>% group_by(linetype,jdbin) %>% summarise(num=n()) 
-plot <- hPlot(num~linetype, data = jd,group = "jdbin",type = "column",title="京东分分布(大额渠道VS大额主营VS小额)")
+#jd=jd %>% group_by(linetype,jdbin) %>% summarise(num=n()) 
+
+jd=data.frame(table(melt(data.frame(linetype=jd[,column2()],jdbin=jd$jdbin),id=c("linetype","jdbin"))))
+if(input$mode2!="line type"){
+jd$linetype <- factor(jd$linetype,levels=c("gjj","wb","bb","tb","oth"))
+}
+
+plot <- hPlot(Freq~linetype, data = jd,group = "jdbin",type = "column",title="京东分分布(大额渠道VS大额主营VS小额)")
 plot$plotOptions(column = list(stacking = "percent"))
 return(plot)    
 }) 
@@ -424,13 +479,23 @@ return(plot)
   salary[as.Date(salary$firstchuo) >= min(input$dates4) & as.Date(salary$firstchuo) <= max(input$dates4),]
   })
 
+  column3 <- reactive({
+    switch(input$mode3,
+           "line type" = which(names(selectedData3())=="linetype"),
+           "mode type"   = which(names(selectedData3())=="chuomode")
+           )
+  })
 ####税前收入
 ##大额渠道VS大额主营VS小额
 output$plot25 <- renderChart2({
 pre=selectedData3()
 pre=pre[!is.na(pre$pretax),]
 #pre=pre %>% group_by(linetype,pretax) %>% summarise(num=n())
-pre=data.frame(table(melt(data.frame(linetype=pre$linetype,pretax=pre$pretax),id=c("linetype","pretax"))))   
+pre=data.frame(table(melt(data.frame(linetype=pre[,column3()],pretax=pre$pretax),id=c("linetype","pretax"))))
+if(input$mode3!="line type"){
+pre$linetype <- factor(pre$linetype,levels=c("gjj","wb","bb","tb","oth"))
+}
+   
 plot <- hPlot(Freq~linetype, data = pre,group = "pretax",type = "column",title="税前收入分布(大额渠道VS大额主营VS小额)")
 plot$plotOptions(column = list(stacking = "percent"))
 return(plot)    
@@ -463,6 +528,12 @@ return(plot)
   duotou[as.Date(duotou$firstchuo) >= min(input$dates5) & as.Date(duotou$firstchuo) <= max(input$dates5),]
   })
 
+  column4 <- reactive({
+    switch(input$mode4,
+           "line type" = which(names(selectedData4())=="linetype"),
+           "mode type"   = which(names(selectedData4())=="chuomode")
+           )
+  })
 ####借款APP数
 ##大额渠道VS大额主营VS小额
 output$plot28 <- renderChart2({
@@ -473,8 +544,12 @@ bo$bobin[bo$bobin=="[0,1)"]="[0,01)"
 bo$bobin[bo$bobin=="[1,2)"]="[01,02)"
 bo$bobin[bo$bobin=="[2,5)"]="[02,05)"
 bo$bobin[bo$bobin=="[5,10)"]="[05,10)"
-bo=bo %>% group_by(linetype,bobin) %>% summarise(num=n()) 
-plot <- hPlot(num~linetype, data = bo,group = "bobin",type = "column",title="借款APP数分布(大额渠道VS大额主营VS小额)")
+#bo=bo %>% group_by(linetype,bobin) %>% summarise(num=n()) 
+bo=data.frame(table(melt(data.frame(linetype=bo[,column4()],bobin=bo$bobin),id=c("linetype","bobin"))))
+if(input$mode4!="line type"){
+bo$linetype <- factor(bo$linetype,levels=c("gjj","wb","bb","tb","oth"))
+}
+plot <- hPlot(Freq~linetype, data = bo,group = "bobin",type = "column",title="借款APP数分布(大额渠道VS大额主营VS小额)")
 plot$plotOptions(column = list(stacking = "percent"))
 plot$yAxis(reversedStacks = FALSE)
 return(plot)    
@@ -524,7 +599,11 @@ td$tdbin[td$tdbin=="[1,2)"]="[01,02)"
 td$tdbin[td$tdbin=="[2,5)"]="[02,05)"
 td$tdbin[td$tdbin=="[5,10)"]="[05,10)"
 #td=td %>% group_by(linetype,tdbin) %>% summarise(num=n()) 
-td=data.frame(table(melt(data.frame(linetype=td$linetype,tdbin=td$tdbin),id=c("linetype","tdbin"))))    
+td=data.frame(table(melt(data.frame(linetype=td[,column4()],tdbin=td$tdbin),id=c("linetype","tdbin"))))
+if(input$mode4!="line type"){
+td$linetype <- factor(td$linetype,levels=c("gjj","wb","bb","tb","oth"))
+}
+    
 plot <- hPlot(Freq~linetype, data = td,group = "tdbin",type = "column",title="同盾一月内查询数分布(大额渠道VS大额主营VS小额)")
 plot$plotOptions(column = list(stacking = "percent"))
 plot$yAxis(reversedStacks = FALSE)
@@ -575,7 +654,12 @@ td$tdbin[td$tdbin=="[1,2)"]="[01,02)"
 td$tdbin[td$tdbin=="[2,5)"]="[02,05)"
 td$tdbin[td$tdbin=="[5,10)"]="[05,10)"
 #td=td %>% group_by(linetype,tdbin) %>% summarise(num=n()) 
-td=data.frame(table(melt(data.frame(linetype=td$linetype,tdbin=td$tdbin),id=c("linetype","tdbin"))))    
+td=data.frame(table(melt(data.frame(linetype=td[,column4()],tdbin=td$tdbin),id=c("linetype","tdbin")))) 
+if(input$mode4!="line type"){
+td$linetype <- factor(td$linetype,levels=c("gjj","wb","bb","tb","oth"))
+}
+
+   
 plot <- hPlot(Freq~linetype, data = td,group = "tdbin",type = "column",title="同盾三月内查询数分布(大额渠道VS大额主营VS小额)")
 plot$plotOptions(column = list(stacking = "percent"))
 plot$yAxis(reversedStacks = FALSE)
@@ -621,8 +705,13 @@ output$plot37 <- renderChart2({
 td=selectedData4()
 td=td[!is.na(td$final_score),]
 td$tdbin=as.character(cut(td$final_score,breaks=c(0,20,80,100),include.lowest = TRUE,right = FALSE))
-td=td %>% group_by(linetype,tdbin) %>% summarise(num=n()) 
-plot <- hPlot(num~linetype, data = td,group = "tdbin",type = "column",title="同盾分分布(大额渠道VS大额主营VS小额)")
+#td=td %>% group_by(linetype,tdbin) %>% summarise(num=n())
+td=data.frame(table(melt(data.frame(linetype=td[,column4()],tdbin=td$tdbin),id=c("linetype","tdbin")))) 
+if(input$mode4!="line type"){
+td$linetype <- factor(td$linetype,levels=c("gjj","wb","bb","tb","oth"))
+}
+ 
+plot <- hPlot(Freq~linetype, data = td,group = "tdbin",type = "column",title="同盾分分布(大额渠道VS大额主营VS小额)")
 plot$plotOptions(column = list(stacking = "percent"))
 plot$yAxis(reversedStacks = FALSE)
 return(plot)    
@@ -662,7 +751,12 @@ bo$bobin=as.character(cut(bo$message_count_default,breaks=c(0,1,5,10,20,500),inc
 bo$bobin[bo$bobin=="[0,1)"]="[0,01)"
 bo$bobin[bo$bobin=="[1,5)"]="[01,05)"
 bo$bobin[bo$bobin=="[5,10)"]="[05,10)"
-bo=bo %>% group_by(linetype,bobin) %>% summarise(num=n()) 
+#bo=bo %>% group_by(linetype,bobin) %>% summarise(num=n()) 
+bo=data.frame(table(melt(data.frame(linetype=bo[,column4()],bobin=bo$bobin),id=c("linetype","bobin"))))
+if(input$mode4!="line type"){
+bo$linetype <- factor(bo$linetype,levels=c("gjj","wb","bb","tb","oth"))
+}
+
 plot <- hPlot(num~linetype, data = bo,group = "bobin",type = "column",title="逾期短信数分布(大额渠道VS大额主营VS小额)")
 plot$plotOptions(column = list(stacking = "percent"))
 plot$yAxis(reversedStacks = FALSE)
@@ -705,6 +799,13 @@ return(plot)
   selectedData5 <- reactive({
   zizhi[as.Date(zizhi$firstchuo) >= min(input$dates6) & as.Date(zizhi$firstchuo) <= max(input$dates6),]
   })
+  
+  column5 <- reactive({
+    switch(input$mode5,
+           "line type" = which(names(selectedData5())=="linetype"),
+           "mode type"   = which(names(selectedData5())=="chuomode")
+           )
+  })
 ####最大信用卡额度
 ##大额渠道VS大额主营
 output$plot43 <- renderChart2({
@@ -720,7 +821,13 @@ bo$bobin[bo$bobin=="[1e+04,2e+04)"]="[1w,2w)"
 bo$bobin[bo$bobin=="[2e+04,5e+04)"]="[2w,5w)"
 bo$bobin[bo$bobin=="[5e+04,1e+05)"]="[5w,5-10w)"
 bo$bobin[bo$bobin=="[1e+05,1e+06]"]="大于10w"
-bo=data.frame(table(melt(data.frame(linetype=bo$linetype,bobin=bo$bobin),id=c("linetype","bobin"))))   
+#bo=data.frame(table(melt(data.frame(linetype=bo$linetype,bobin=bo$bobin),id=c("linetype","bobin"))))
+bo=data.frame(table(melt(data.frame(linetype=bo[,column5()],bobin=bo$bobin),id=c("linetype","bobin"))))
+if(input$mode5!="line type"){
+bo$linetype <- factor(bo$linetype,levels=c("gjj","wb","bb","tb","oth"))
+}
+
+   
 #bo=bo %>% group_by(linetype,bobin) %>% summarise(num=n()) 
 plot <- hPlot(Freq~linetype, data = bo,group = "bobin",type = "column",title="最高信用卡额度分布(大额渠道VS大额主营)")
 plot$plotOptions(column = list(stacking = "percent"))
@@ -786,7 +893,13 @@ bo$bobin[bo$bobin=="[2e+04,3e+04)"]="[2w,3w)"
 bo$bobin[bo$bobin=="[3e+04,5e+04)"]="[3w,5w)"
 bo$bobin[bo$bobin=="[5e+04,1e+05)"]="[5w,5-10w)"
 bo$bobin[bo$bobin=="[1e+05,1e+07]"]="大于10w"
-bo=data.frame(table(melt(data.frame(linetype=bo$linetype,bobin=bo$bobin),id=c("linetype","bobin"))))   
+#bo=data.frame(table(melt(data.frame(linetype=bo$linetype,bobin=bo$bobin),id=c("linetype","bobin"))))
+
+bo=data.frame(table(melt(data.frame(linetype=bo[,column5()],bobin=bo$bobin),id=c("linetype","bobin"))))
+if(input$mode5!="line type"){
+bo$linetype <- factor(bo$linetype,levels=c("gjj","wb","bb","tb","oth"))
+}
+   
 #bo=bo %>% group_by(linetype,bobin) %>% summarise(num=n()) 
 plot <- hPlot(Freq~linetype, data = bo,group = "bobin",type = "column",title="其他贷款最大额度分布(大额渠道VS大额主营)")
 plot$plotOptions(column = list(stacking = "percent"))
@@ -848,7 +961,13 @@ bo$bobin[bo$bobin=="[0,1)"]="[0,01)"
 bo$bobin[bo$bobin=="[1,3)"]="[01,03)"
 bo$bobin[bo$bobin=="[3,6)"]="[03,06)"
 bo$bobin[bo$bobin=="[6,10)"]="[06,10)"
-bo=data.frame(table(melt(data.frame(linetype=bo$linetype,bobin=bo$bobin),id=c("linetype","bobin"))))   
+#bo=data.frame(table(melt(data.frame(linetype=bo$linetype,bobin=bo$bobin),id=c("linetype","bobin"))))  
+bo=data.frame(table(melt(data.frame(linetype=bo[,column5()],bobin=bo$bobin),id=c("linetype","bobin"))))
+if(input$mode5!="line type"){
+bo$linetype <- factor(bo$linetype,levels=c("gjj","wb","bb","tb","oth"))
+}
+
+ 
 #bo=bo %>% group_by(linetype,bobin) %>% summarise(num=n()) 
 plot <- hPlot(Freq~linetype, data = bo,group = "bobin",type = "column",title="有效信用卡张数分布(大额渠道VS大额主营)")
 plot$plotOptions(column = list(stacking = "percent"))
@@ -898,6 +1017,13 @@ return(plot)
   selectedData6 <- reactive({
   owing[as.Date(owing$firstchuo) >= min(input$dates7) & as.Date(owing$firstchuo) <= max(input$dates7),]
   })
+
+  column6 <- reactive({
+    switch(input$mode6,
+           "line type" = which(names(selectedData6())=="linetype"),
+           "mode type"   = which(names(selectedData6())=="chuomode")
+           )
+  })
   
 ####其他贷款月还
 ##大额渠道VS大额主营
@@ -912,7 +1038,12 @@ bo$bobin[bo$bobin=="[3e+03,6e+03)"]="[0.3w,0.6w)"
 bo$bobin[bo$bobin=="[6e+03,1e+04)"]="[0.6,1w)"
 bo$bobin[bo$bobin=="[1e+04,2e+04)"]="[1w,2w)"
 bo$bobin[bo$bobin=="[2e+04,5e+05]"]="2w以上"
-bo=data.frame(table(melt(data.frame(linetype=bo$linetype,bobin=bo$bobin),id=c("linetype","bobin"))))   
+#bo=data.frame(table(melt(data.frame(linetype=bo$linetype,bobin=bo$bobin),id=c("linetype","bobin"))))
+bo=data.frame(table(melt(data.frame(linetype=bo[,column6()],bobin=bo$bobin),id=c("linetype","bobin"))))
+if(input$mode6!="line type"){
+bo$linetype <- factor(bo$linetype,levels=c("gjj","wb","bb","tb","oth"))
+}
+   
 #bo=bo %>% group_by(linetype,bobin) %>% summarise(num=n()) 
 plot <- hPlot(Freq~linetype, data = bo,group = "bobin",type = "column",title="其他贷款月还分布(大额渠道VS大额主营)")
 plot$plotOptions(column = list(stacking = "percent"))
@@ -973,7 +1104,12 @@ bo$bobin[bo$bobin=="[3e+03,6e+03)"]="[0.3w,0.6w)"
 bo$bobin[bo$bobin=="[6e+03,1e+04)"]="[0.6,1w)"
 bo$bobin[bo$bobin=="[1e+04,2e+04)"]="[1w,2w)"
 bo$bobin[bo$bobin=="[2e+04,5e+05]"]="2w以上"
-bo=data.frame(table(melt(data.frame(linetype=bo$linetype,bobin=bo$bobin),id=c("linetype","bobin"))))   
+#bo=data.frame(table(melt(data.frame(linetype=bo$linetype,bobin=bo$bobin),id=c("linetype","bobin"))))
+bo=data.frame(table(melt(data.frame(linetype=bo[,column6()],bobin=bo$bobin),id=c("linetype","bobin"))))
+if(input$mode6!="line type"){
+bo$linetype <- factor(bo$linetype,levels=c("gjj","wb","bb","tb","oth"))
+}
+   
 #bo=bo %>% group_by(linetype,bobin) %>% summarise(num=n()) 
 plot <- hPlot(Freq~linetype, data = bo,group = "bobin",type = "column",title="信用卡月还分布(大额渠道VS大额主营)")
 plot$plotOptions(column = list(stacking = "percent"))
@@ -1034,7 +1170,12 @@ bo$bobin[bo$bobin=="[2e+03,5e+03)"]="(0.2w,0.5w)"
 bo$bobin[bo$bobin=="[5e+03,1e+04)"]="[0.5,1w)"
 bo$bobin[bo$bobin=="[1e+04,2e+04)"]="[1w,2w)"
 bo$bobin[bo$bobin=="[2e+04,5e+05]"]="2w以上"
-bo=data.frame(table(melt(data.frame(linetype=bo$linetype,bobin=bo$bobin),id=c("linetype","bobin"))))   
+#bo=data.frame(table(melt(data.frame(linetype=bo$linetype,bobin=bo$bobin),id=c("linetype","bobin"))))
+bo=data.frame(table(melt(data.frame(linetype=bo[,column6()],bobin=bo$bobin),id=c("linetype","bobin"))))
+if(input$mode6!="line type"){
+bo$linetype <- factor(bo$linetype,levels=c("gjj","wb","bb","tb","oth"))
+}
+   
 #bo=bo %>% group_by(linetype,bobin) %>% summarise(num=n()) 
 plot <- hPlot(Freq~linetype, data = bo,group = "bobin",type = "column",title="房贷月还分布(大额渠道VS大额主营)")
 plot$plotOptions(column = list(stacking = "percent"))
