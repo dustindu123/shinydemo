@@ -45,7 +45,7 @@ dashboardPage(
     #a(img(src="logo.png",height=60,width=200),
     #href="https://www.hellobi.com/event/137",target="black")
      sidebarMenu(
-        menuItem("大额基本数据", tabName = "大额基本数据", icon = icon("dashboard")),
+        #menuItem("大额基本数据", tabName = "大额基本数据", icon = icon("dashboard")),
 
         menuItem("人群画像", tabName = "人群画像", icon = icon("dashboard"),startExpanded = TRUE,
         menuSubItem("基本信息", tabName = "基本信息"),
@@ -66,17 +66,6 @@ dashboardPage(
 ),
  dashboardBody(
 tabItems(
-      tabItem("大额基本数据", 
-        fluidRow(
-          box(
-            dateRangeInput("dates", label = h3("Date range")),width=12
-            #hr(),
-            #fluidRow(column(4, verbatimTextOutput("value")))            
-            #h3(print(praise())),
-            #h4("通过对各维度的不同取值赋权,形成该维度下的得分,最终以左图形式呈现")
-          )
-        )
-       ),
       tabItem("基本信息", 
         fluidRow(
           box(dateRangeInput("dates2", "Select the date range:",
