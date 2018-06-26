@@ -155,7 +155,9 @@ ods.cooperatesource as regsc on a.f_sourceid=regsc.sourceid
 drop table if exists appzc.dx_flowmonitor_basicinfo;
 create table appzc.dx_flowmonitor_basicinfo
 as
-select 
+select
+    cj_status,
+    listingid,
     userid,
     inserttime ,
     credit_bin,
@@ -175,6 +177,8 @@ select
 
 from (
 select 
+    a.cj_status,
+    mmv.listingid,
     mmv.userid,
     mmv.inserttime ,
     mmv.credit_bin,
@@ -222,7 +226,9 @@ where flag=1 and inserttime >='2018-04-24'
 
 union all 
 
-select 
+select
+    cj_status,
+    listingid,
     userid,
     inserttime ,
     credit_bin,
@@ -242,6 +248,8 @@ select
 
 from (
 select 
+    a.cj_status,
+    mmv.listingid,
     mmv.userid,
     mmv.inserttime ,
     mmv.credit_bin,
@@ -281,7 +289,67 @@ and gender_renren_match=101
 and substr(mark,1,2) in ('1','2','3','4','5','2.','3.','4.','5.')
 
  )mm
-where flag=1 and  inserttime >='2018-04-24';
+where flag=1 and  inserttime >='2018-04-24'
+
+union all 
+
+select distinct
+    cj_status,
+    listingid,
+    userid,
+    inserttime ,
+    credit_bin,
+    firstchuo, 
+    firstchuo_m,
+    week,
+    dweek,
+    dyear,
+    age,
+    /*gender, */
+    edu_cert,
+    edu,
+    chuomode,
+    message_count_default,
+    boappnum,
+    '成交的老客' as linetype
+
+from (
+select 
+    cast('1' as int) as cj_status,
+    mmv.listingid,
+    mmv.userid,
+    vi.creation_date  as inserttime,
+    mmv.credit_bin,
+    substring(mmv.inserttime,1,10) as firstchuo, 
+    substring(mmv.inserttime,1,7) as firstchuo_m,    
+    case when weekofyear(days_sub(mmv.inserttime,6)) = weekofyear(mmv.inserttime) then concat(cast(year(days_sub(mmv.inserttime,6)) as string),'-',cast(weekofyear(days_sub(mmv.inserttime,6)) as string))
+    else concat(cast(year(mmv.inserttime) as string),'-',cast(weekofyear(mmv.inserttime) as string)) end as week,
+    case when weekofyear(days_sub(mmv.inserttime,6)) = weekofyear(mmv.inserttime) then year(days_sub(mmv.inserttime,6)) else  year(mmv.inserttime) end as dyear,
+    case when weekofyear(days_sub(mmv.inserttime,6)) = weekofyear(mmv.inserttime) then weekofyear(days_sub(mmv.inserttime,6)) else  weekofyear(mmv.inserttime) end as dweek,
+    mmv.age,
+    /*gender, */
+    mmv.edu_cert,
+    message_count_default,
+    boappnum,
+    'null' as chuomode,        
+    
+    case when mmv.edu_cert='1' then '1研究生' /* 研究生*/
+         when mmv.edu_cert='2' then '2本科' /* 本科*/
+         when mmv.edu_cert='3' then '3专科' /* 专科*/
+         else '4无学历' end as edu, 
+    ROW_NUMBER()over(partition by mmv.userid order by mmv.inserttime asc,vi.auditing_date) as flag
+    
+from ods.mobilemodelvariable mmv
+
+inner join (select listing_id,new_category_name,auditing_date,creation_date from ddm.listing_vintage) vi
+on mmv.listingid=vi.listing_id
+
+where 
+ realname_renren_match in (13003,13002) 
+and gender_renren_match not in  (301,303,202) 
+
+ )mm
+where flag=1 ;
 
 
 
@@ -493,6 +561,7 @@ from
 (
 select 
 userid,
+cast(json_listingid as int) as listingid,
 cmax,
 omax,
 vcard,
@@ -512,6 +581,7 @@ select *
 from (
 select 
 userid, 
+json_listingid,
 json_inserttime,
 json_max_ccard_amount cmax,
 json_otherLoanMaxAmount omax,
@@ -529,16 +599,64 @@ json_unsettledvalidotherloannum vvloan,
 ROW_NUMBER()over(partition by userid order by json_inserttime asc) as flag
 
 from  edw.userpataresult
-where json_bizid ='13002'
+where json_dingid not in ('301','202','303') and json_bizid  ='13002'
       and dt>='2018-04-24' 
+      and cast(json_listingid as int) >-1
       and json_flow_count='1' ) a  where flag=1
  
 union all  
 
 select *
 from (
+
 select 
 pa.userid,
+json_listingid,
+json_inserttime, 
+json_zxFull_maxCCardAmountFull as cmax,
+json_otherLoanMaxAmountFull as omax,
+json_zxFull_cntValidCCardFull as vcard,
+json_houseLoanEveryMonthPaypalAmount rph,
+rpo,
+rpc,
+json_validotherloannumfull vloan,
+json_unsettledvalidotherloannum vvloan, 
+json_creditReportOneMonthQueryTimes as query1m,
+json_loanHouseOverdueMonthsInTwoYears as hoverdue2y,
+json_otherLoanOverdueMonthsInTwoYears as ooverdue2y,
+json_ccardOverdueMonthsTwoYears as coverdue2y,
+ROW_NUMBER()over(partition by pa.userid order by json_inserttime asc,gg.inserttime asc,kk.inserttime asc) as flag
+
+from  edw.userpataresult pa
+left join 
+(select 
+userid ,
+inserttime,
+sum(cast(regexp_replace(Scheduled_Payment_Amount,',','') as decimal(32,2))) as rpc 
+from  ods.CRD_CD_LND 
+group by userid ,inserttime) gg
+on pa.userid=gg.userid 
+
+left join 
+(select 
+userid,
+inserttime,
+sum(case when  Type_Dw not like '%房%' and  state='正常'  and Payment_Rating='按月归还'  and Remain_Payment_Cyc is not null and Remain_Payment_Cyc not in ('--','')  and  Remain_Payment_Cyc<>'0' then round(cast(regexp_replace(Scheduled_Payment_Amount,',','') as decimal(32,2))) end) as rpo
+from ods.CRD_CD_LN 
+group by userid ,inserttime)kk
+on pa.userid=kk.userid 
+
+where json_dingid not in ('301','202','303') and json_bizid ='13003'
+      and dt>='2018-04-24' 
+      and cast(json_listingid as int) >-1
+      and json_flow_count='1' ) a  where flag=1
+
+union all
+select *
+from (
+select 
+pa.userid,
+json_listingid,
 json_inserttime, 
 json_zxFull_maxCCardAmountFull as cmax,
 json_otherLoanMaxAmountFull as omax,
@@ -575,10 +693,18 @@ on pa.userid=kk.userid
 
 where 
 json_bizid = '13003'
+and cast(json_listingid as int) =-1
 and dt>='2018-04-24' 
-and json_flow_count='2' )b where flag=1 ) ly )ys  where flag1=1 )tt
+and json_dingid in ('301','202','303')
+and json_flow_count='2' )b where flag=1 
 
-on dx.userid=tt.userid;
+
+) ly 
+)ys  
+where flag1=1 )tt
+
+on dx.userid=tt.userid  and  dx.listingid=tt.listingid
+;
 
 
 
@@ -590,7 +716,7 @@ options(java.parameters = "-Xmx8048m")
 source("D:/source/impala_connect.R")
 basic <- dbGetQuery(con, 
 "select  * 
-from appzc.dx_flowmonitor_basicinfo6 "
+from appzc.dx_flowmonitor_basicinfo6 where inserttime>='2018-05-01'"
 )
 #basic2 <- dbGetQuery(con, 
 #"select  * 
