@@ -45,7 +45,7 @@ dashboardPage(
     #a(img(src="logo.png",height=60,width=200),
     #href="https://www.hellobi.com/event/137",target="black")
      sidebarMenu(
-        #menuItem("大额基本数据", tabName = "大额基本数据", icon = icon("dashboard")),
+        menuItem("大额基本数据", tabName = "大额基本数据", icon = icon("dashboard")),
 
         menuItem("人群画像", tabName = "人群画像", icon = icon("dashboard"),startExpanded = TRUE,
         menuSubItem("基本信息", tabName = "基本信息"),
