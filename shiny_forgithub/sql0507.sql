@@ -589,7 +589,7 @@ options(java.parameters = "-Xmx8048m")
 source("D:/source/impala_connect.R")
 basic <- dbGetQuery(con, 
 "select  * 
-from appzc.dx_flowmonitor_basicinfo6 where inserttime>='2018-05-01'"
+from appzc.dx_flowmonitor_basicinfo6 where inserttime>='2018-05-10'"
 )
 #basic2 <- dbGetQuery(con, 
 #"select  * 
@@ -864,7 +864,7 @@ basic3=basic[basic$linetype=="大额渠道",]
 
 
 basic1=basic1[basic1$rand %in% sample(0:999,600),]
-basic2=basic2[basic2$rand %in% sample(0:999,350),]
+basic2=basic2[basic2$rand %in% sample(0:999,200),]
 basic=rbind(basic1,basic2,basic3)
 
 basic$userid=NULL
