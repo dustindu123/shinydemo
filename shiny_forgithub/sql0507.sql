@@ -19,7 +19,7 @@ isnull(newsourceid,sourceid) in
 (select sourceid from
 ods.cooperatesource
 where
-channelsid=2911 ) ) as a ;
+channelsid in (2911,3080,3081,3082,3083,3084,3085,3086,3087,3088,3089,3090) ) as a ;
 
 
 /*大额H5首登用户(使用)*/
@@ -42,7 +42,7 @@ sourceid
 from
 ods.cooperatesource
 where
-channelsid=2911) ) as a
+channelsid in (2911,3080,3081,3082,3083,3084,3085,3086,3087,3088,3089,3090) ) as a
 where
 a.r=1 ;
 
