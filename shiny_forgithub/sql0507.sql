@@ -589,7 +589,7 @@ options(java.parameters = "-Xmx8048m")
 source("D:/source/impala_connect.R")
 basic <- dbGetQuery(con, 
 "select  * 
-from appzc.dx_flowmonitor_basicinfo6 where inserttime>='2018-05-10'"
+from appzc.dx_flowmonitor_basicinfo6 where inserttime>='2018-05-20'"
 )
 #basic2 <- dbGetQuery(con, 
 #"select  * 
