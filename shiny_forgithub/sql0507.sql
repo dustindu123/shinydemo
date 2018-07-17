@@ -1,4 +1,4 @@
-/*
+./*
 #############################
 ##edited by duxin,2018-03-28#
 #############################
@@ -479,7 +479,8 @@ vvloan,
 query1m,
 hoverdue2y,
 ooverdue2y,
-coverdue2y
+coverdue2y,
+ly.json_repaybin as repaybin
 
 
 
@@ -527,6 +528,7 @@ json_unsettledvalidotherloannum vvloan,
 '-100' as coverdue2y,
 ROW_NUMBER()over(partition by userid order by json_inserttime asc) as flag
 
+
 from  edw.userpataresult
 where json_bizid ='13002'
       and dt>='2018-04-24' 
@@ -553,6 +555,7 @@ json_otherLoanOverdueMonthsInTwoYears as ooverdue2y,
 json_ccardOverdueMonthsTwoYears as coverdue2y,
 ROW_NUMBER()over(partition by pa.userid order by json_inserttime asc,gg.inserttime asc,kk.inserttime asc) as flag
 
+
 from  edw.userpataresult pa
 left join 
 (select 
@@ -577,7 +580,25 @@ json_bizid = '13003'
 and dt>='2018-04-24' 
 and json_flow_count='2' )b where flag=1 ) ly )ys  where flag1=1 )tt
 
-on dx.userid=tt.userid;
+on dx.userid=tt.userid
+
+left join [shuffle]
+( 
+select userid,json_repaybin,
+ROW_NUMBER()over(partition by userid order by json_inserttime asc) as flag
+
+from 
+edw.userpataresult l
+where 
+json_bizid = '13003'
+and dt>='2018-04-24' 
+and json_flow_count='1'
+
+)ly
+on dx.userid=ly.userid  
+and ly.flag=1
+
+;
 
 
 
@@ -599,6 +620,7 @@ from appzc.dx_flowmonitor_basicinfo6 where inserttime>='2018-05-20'"
 basic$fl=NULL
 basic$fl1=NULL
 basic$fl2=NULL
+basic$repaybin=NULL
 
 isNa=function(x)
 {   rr=integer(0)

@@ -31,6 +31,8 @@ channeleva=read.table("channeleva.txt",header = TRUE,sep="",fileEncoding="UTF-8"
 channeleva$firstchuo=as.character(channeleva$firstchuo)
 channeleva1=channeleva[channeleva$sourcetype=="app",]
 channeleva2=channeleva[channeleva$sourcetype=="M",]
+dx=channeleva1 %>% group_by(sourcename) %>% 
+summarise(chuonum=n())
 
 
 ####
@@ -267,11 +269,9 @@ tabItems(
               width = 12),
           box(
            checkboxGroupInput("spider", 
-                              h4("渠道选择"), 
-                              choices = c("广点通", 
-                                             "大额优借", 
-                                             "APP资产大额51卡宝","亿玛dsp","百度SEM-MB大额","神马SEM大额"),
-                              selected = c("广点通","大额优借","APP资产大额51卡宝","亿玛dsp","百度SEM-MB大额","神马SEM大额")),          
+                              h4("渠道选择(戳额数>200的渠道)"), 
+                              choices = dx$sourcename[dx$chuonum>200],
+                              selected = c("广点通","亿玛dsp","今日头条大额")),          
           width = 12          ),
           box(plotOutput("sp6"),width = 12),
           box(selectInput('basic',h4('基本信息'), c("edu","usertype", "citylevel")),width = 12),
