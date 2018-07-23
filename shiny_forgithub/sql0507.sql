@@ -610,11 +610,11 @@ options(java.parameters = "-Xmx8048m")
 source("D:/source/impala_connect.R")
 basic <- dbGetQuery(con, 
 "select  * 
-from appzc.dx_flowmonitor_basicinfo6 where inserttime>='2018-05-20'"
+from appzc.dx_flowmonitor_basicinfo6 where inserttime>='2018-05-25'"
 )
 #basic2 <- dbGetQuery(con, 
 #"select  * 
-#from appzc.dx_flowmonitor_basicinfo6 where inserttime>='2018-05-20'"
+#from appzc.dx_flowmonitor_basicinfo6 where inserttime>='2018-05-25'"
 #)
 
 basic$fl=NULL
@@ -626,11 +626,18 @@ isNa=function(x)
 {   rr=integer(0)
     rr=sum(is.na(x))/length(x)
     return(rr)}
+    
 basic$new1=apply(basic[,which(names(basic)=="jdcredit_score"):which(names(basic)=="coverdue2y")],1,isNa)
 basic=basic[-which(basic$new1>=0.75&basic$linetype %in% c("大额主营","大额渠道")),]
 basic$new1=NULL
 ##渠道各种率展示
 channel <- dbGetQuery(con, "select  * from appzc.dx_channelmonitor_basicinfo")
+#################################渠道大类
+channel_sub=read.csv("D:/shinydemo/shiny_forgithub/channel_sub.csv",header = TRUE,stringsAsFactors = FALSE)
+ch=unique(channel_sub[channel_sub$渠道标签 %in% c("APP贷超","APP信息流","异业合作") ,])
+names(ch)[2]="channel_category"
+channel1=merge(channel,ch,"sourcename",all.x = T)
+##################################
 
 
 ##basicinfo 数据处理
@@ -889,16 +896,20 @@ basic1=basic1[basic1$rand %in% sample(0:999,600),]
 basic2=basic2[basic2$rand %in% sample(0:999,200),]
 basic=rbind(basic1,basic2,basic3)
 
+basic=merge(basic,channel1[channel1$chuo_status==1&!is.na(channel1$channel_category),c(which(names(channel1)=="userid"),which(names(channel1)=="channel_category"))],"userid",all.x=T)
+basic$channel_total_category=ifelse(!is.na(basic$channel_category),basic$channel_category,ifelse(basic$linetype=="大额渠道","其他大额渠道类型",basic$linetype))
+
+basic$channel_category=NULL
 basic$userid=NULL
 basic$rand=NULL
 
 
-basicinfo=basic[,c(2,3,5,6,9,10,28,29)]
-model=basic[,c(1,2,3,6,8,9,11,12,13)]
-salary=basic[,c(2,3,6,9,14)]
-duotou=basic[,c(2,3,6,7,8,9,15,16,17)]
-zizhi=basic[,c(2,3,6,9,18,19,20)]
-owing=basic[,c(2,3,6,9,21,22,23)]
+basicinfo=basic[,c(2,3,5,6,9,10,28,29,30)]
+model=basic[,c(1,2,3,6,8,9,11,12,13,30)]
+salary=basic[,c(2,3,6,9,14,30)]
+duotou=basic[,c(2,3,6,7,8,9,15,16,17,30)]
+zizhi=basic[,c(2,3,6,9,18,19,20,30)]
+owing=basic[,c(2,3,6,9,21,22,23,30)]
 
 
 ##
