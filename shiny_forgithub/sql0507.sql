@@ -620,7 +620,9 @@ from appzc.dx_flowmonitor_basicinfo6 where inserttime>='2018-05-25'"
 basic$fl=NULL
 basic$fl1=NULL
 basic$fl2=NULL
-basic$repaybin=NULL
+basic$repaybin=as.numeric(as.character(basic$repaybin))
+basic$repaybin[basic$repaybin==0]=NA
+
 
 isNa=function(x)
 {   rr=integer(0)
@@ -721,7 +723,7 @@ return(data)
 basic=dealBasic(basic)
 channeleva=merge(channel[channel$chuo_status==1,],basic,"userid")
 
-for (i in which(names(channeleva)=="cmax"):which(names(channeleva)=="coverdue2y")){
+for (i in which(names(channeleva)=="cmax"):which(names(channeleva)=="repaybin")){
 channeleva[,i]=as.numeric(channeleva[,i]) }
 
 ####################
@@ -731,6 +733,7 @@ edu=sum(edu %in% c("1硕士","2本科")&!is.na(edu))/sum(!is.na(edu)),
 usertype=sum(usertype %in% c("4有额未发标","5纯新")&!is.na(usertype))/sum(!is.na(usertype)),
 citylevel=sum(citylevel_bin %in% c("1线","2线")&!is.na(citylevel_bin))/sum(!is.na(citylevel_bin)),
 bin=sum(credit_bin <=2&!is.na(credit_bin))/sum(!is.na(credit_bin)),
+rbin=sum(repaybin <=1&!is.na(repaybin))/sum(!is.na(repaybin)),
 tc=sum(risk_score <=20&!is.na(risk_score))/sum(!is.na(risk_score)),
 jd=sum(jdcredit_score >=700&!is.na(jdcredit_score))/sum(!is.na(jdcredit_score)),
 um=sum(umeng_score >=700&!is.na(umeng_score))/sum(!is.na(umeng_score)),
@@ -744,7 +747,7 @@ zx1=sum(query1m<=1 &!is.na(query1m)&query1m>=0&query1m!=-1)/sum(!is.na(query1m)&
 def=sum(message_count_default==0 &!is.na(message_count_default))/sum(!is.na(message_count_default)&message_count_default>=0),
 zx2=sum((hoverdue2y+coverdue2y+ooverdue2y)==0 &ooverdue2y!=-100&ooverdue2y!=-1&!is.na(hoverdue2y)&!is.na(coverdue2y)&!is.na(ooverdue2y))/sum(!is.na(hoverdue2y)&!is.na(coverdue2y)&ooverdue2y!=-1&!is.na(ooverdue2y)&ooverdue2y!=-100)
 ) %>%
-subset(num>20)
+subset(num>=66)
 
 ceshi1[ceshi1=="NaN"]=NA
 #########################################
@@ -769,6 +772,12 @@ data$bin_score=ifelse(data$credit_bin==1,5,
     ifelse(data$credit_bin ==3,3,
     ifelse((data$credit_bin>3&data$credit_bin<=5)|is.na(data$credit_bin),2,
     ifelse(data$credit_bin>5&data$credit_bin<=8,1,0)))))
+
+data$rbin_score=
+    ifelse(data$repaybin==1,5,
+    ifelse(data$repaybin==2,4,
+    ifelse(data$repaybin==3|data$repaybin==0|is.na(data$repaybin),3,
+    ifelse(data$repaybin ==4,1,0))))
     
 data$tc_score=ifelse(data$risk_score>0&data$risk_score<=20,4,
     ifelse(data$risk_score>20&data$risk_score<=40,3,
@@ -841,7 +850,7 @@ data$zx2_score=ifelse((data$hoverdue2y+data$coverdue2y+data$ooverdue2y)==0&data$
     ifelse(((data$hoverdue2y+data$coverdue2y+data$ooverdue2y)>=5&(data$hoverdue2y+data$coverdue2y+data$ooverdue2y)<10&data$hoverdue2y>-1&data$coverdue2y>-1&data$ooverdue2y>-1 )|(data$hoverdue2y==-1|data$coverdue2y==-1|data$ooverdue2y==-1 ),1,
     ifelse((data$hoverdue2y+data$coverdue2y+data$ooverdue2y)>=10&(data$hoverdue2y+data$coverdue2y+data$ooverdue2y)<20&data$hoverdue2y>-1&data$coverdue2y>-1&data$ooverdue2y>-1 ,0,-1))))
     
-data=data[,c(2,42:56)]   
+data=data[,c(2,43:58)]   
 return(data)
     }
 fscore=score(channeleva[channeleva$sourcetype=="app"&channeleva$sourcename %in% ceshi1$sourcename,])
@@ -858,6 +867,7 @@ edu=ratio(edu_score),
 city=ratio(city_score),
 usertype=ratio(usertype_score),
 bin=ratio(bin_score),
+rbin=ratio(rbin_score),
 tengxun=ratio(tc_score),
 umeng=ratio(um_score),
 jd=ratio(jd_score),
@@ -902,7 +912,7 @@ basic1=basic[basic$linetype =="大额主营",]
 basic2=basic[basic$linetype =="小额",]
 basic3=basic[basic$linetype=="大额渠道",]
 
-
+set.seed(6666)
 basic1=basic1[basic1$rand %in% sample(0:999,550),]
 basic2=basic2[basic2$rand %in% sample(0:999,200),]
 basic=rbind(basic1,basic2,basic3)
@@ -915,16 +925,16 @@ basic$userid=NULL
 basic$rand=NULL
 
 
-basicinfo=basic[,c(2,3,5,6,9,10,28,29,30)]
-model=basic[,c(1,2,3,6,8,9,11,12,13,30)]
-salary=basic[,c(2,3,6,9,14,30)]
-duotou=basic[,c(2,3,6,7,8,9,15,16,17,30)]
-zizhi=basic[,c(2,3,6,9,18,19,20,30)]
-owing=basic[,c(2,3,6,9,21,22,23,30)]
+basicinfo=basic[,c(2,3,5,6,9,10,29,30,31)]
+model=basic[,c(1,2,3,6,8,9,11,12,13,28,31)]
+salary=basic[,c(2,3,6,9,14,31)]
+duotou=basic[,c(2,3,6,7,8,9,15,16,17,31)]
+zizhi=basic[,c(2,3,6,9,18,19,20,31)]
+owing=basic[,c(2,3,6,9,21,22,23,31)]
 
 
 ##
-write.table(channel,"D:/shinydemo/shiny_forgithub/channel.txt",quote=FALSE,row.names=FALSE,fileEncoding = "UTF-8") ##地址可更改 
+write.table(channel1,"D:/shinydemo/shiny_forgithub/channel.txt",quote=FALSE,row.names=FALSE,fileEncoding = "UTF-8") ##地址可更改 
 ##
 ##
 write.table(channeleva,"D:/shinydemo/shiny_forgithub/channeleva.txt",quote=FALSE,row.names=FALSE,fileEncoding = "UTF-8") ##地址可更改 

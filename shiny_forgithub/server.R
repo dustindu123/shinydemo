@@ -346,6 +346,42 @@ plot$yAxis(reversedStacks = FALSE)
 return(plot)    
 }) 
 
+
+####repaybin
+##大额渠道VS大额主营VS小额
+output$plot13_repay <- renderChart2({
+rbin=selectedData2()
+rbin=rbin[!is.na(rbin$repaybin)&rbin$repaybin!=0,]
+rbin=data.frame(table(melt(data.frame(linetype=rbin[,column2()],repaybin=rbin$repaybin),id=c("linetype","repaybin"))))
+
+rbin=cusChange(input$mode2,rbin)
+
+plot <- hPlot(Freq~linetype, data = rbin,group = "repaybin",type = "column",title="repaybin分布(大额渠道VS大额主营VS小额)")
+plot$plotOptions(column = list(stacking = "percent"))
+plot$yAxis(reversedStacks = FALSE)
+return(plot)    
+}) 
+##大额
+output$plot14_repay <- renderChart2({
+rbin=selectedData2()[selectedData2()$linetype=="大额渠道",]
+rbin=rbin[!is.na(rbin$repaybin)&rbin$repaybin!=0,]
+rbin=data.frame(table(melt(data.frame(week=rbin$week,repaybin=rbin$repaybin),id=c("week","repaybin"))))
+plot <- hPlot(Freq~week, data = rbin,group = "repaybin",type = "column",title="大额渠道repaybin分布")
+plot$plotOptions(column = list(stacking = "percent"))
+plot$yAxis(reversedStacks = FALSE)
+return(plot)    
+}) 
+##小额
+output$plot15_repay <- renderChart2({
+rbin=selectedData2()[selectedData2()$linetype=="大额主营",]
+rbin=rbin[!is.na(rbin$repaybin)&rbin$repaybin!=0,]
+rbin=data.frame(table(melt(data.frame(week=rbin$week,repaybin=rbin$repaybin),id=c("week","repaybin"))))
+plot <- hPlot(Freq~week, data = rbin,group = "repaybin",type = "column",title="大额主营repaybin分布")
+plot$plotOptions(column = list(stacking = "percent"))
+plot$yAxis(reversedStacks = FALSE)
+return(plot)    
+}) 
+
 ####腾讯分
 ##大额渠道VS大额主营VS小额
 output$plot16 <- renderChart2({
@@ -1160,9 +1196,46 @@ allzhratio=round(sum(allcj_status)/n(),2)) %>%
 subset(num>50)
 names(m)=c("app渠道名称","登录大额人数","戳额数","有额数","戳额率","有额率","确认率","大额转化率","整体转化率")
 #return(m)
-datatable(m,caption = 'M站渠道数据')
+datatable(m,caption = 'M站渠道在超级APP上的转化数据')
 
 })
+
+output$rate3 = renderDataTable({
+
+bo=selectedData7()
+bo$channel_category[is.na(bo$channel_category)]="其他大额渠道类型"
+m=bo %>% group_by(channel_category) %>% 
+summarise(num=n(),chuonum=sum(chuo_status),younum=sum(youe_status),
+chuoratio=round(sum(chuo_status)/n(),2),
+youratio=round(ifelse(sum(chuo_status)>0,sum(youe_status)/sum(chuo_status),0),2),
+fbratio=round(ifelse(sum(youe_status)>0,sum(fb_status)/sum(youe_status),0),2),
+zhratio=round(sum(cj_status)/n(),2),
+allzhratio=round(sum(allcj_status)/n(),2)) 
+names(m)=c("渠道类型","登录大额人数","戳额数","有额数","戳额率","有额率","确认率","大额转化率","整体转化率")
+#return(m)
+datatable(m,caption = '各类型渠道在超级APP上的转化数据')
+
+})
+
+output$rate4 = renderDataTable({
+
+score=score %>% group_by(sourcename) %>%
+      summarise(
+      chuonum=sum(num),
+      basicinfo=edu+city+usertype,
+      model=(bin*2+rbin*2+tengxun*1+umeng*1+jd)/7,
+      asset=salary+max_creditcard+max_otherloan,
+      multiloan=boapp+tongdun+zx_query,
+      ovd=ovd_msg+overdue_zx )
+
+score_mat=data.frame(sourcename=score$sourcename,chuonum=score$chuonum,basicinfo=rank(score$basicinfo),model=rank(score$model),asset=rank(score$asset),multiloan=rank(score$multiloan),ovd=rank(score$ovd))
+score_mat$total=round((score_mat$basicinfo+score_mat$model*3+score_mat$asset*2+score_mat$multiloan*2+score_mat$ovd*2))
+names(score_mat)=c("渠道名称","戳额人数","基本信息维度得分","模型维度","资产信息维度","多头信息维度","逾期信息维度","综合得分")
+#return(m)
+datatable(score_mat,caption = '渠道各维度评分展示')
+
+})
+
 
 
 ####app渠道
@@ -1203,6 +1276,7 @@ return(plot)
   selectedcolumn1 <- reactive({
     switch(input$basic1,
            "bin" = data.frame(sourcename=selectedData8()$sourcename,edu=selectedData8()$credit_bin),
+           "repaybin" = data.frame(sourcename=selectedData8()$sourcename,edu=selectedData8()$repaybin),
            "tengxun"   = data.frame(sourcename=selectedData8()$sourcename,edu=selectedData8()$tcbin),
            "jd"  = data.frame(sourcename=selectedData8()$sourcename,edu=selectedData8()$jdbin),
            "umeng"  = data.frame(sourcename=selectedData8()$sourcename,edu=selectedData8()$umbin)
@@ -1212,6 +1286,7 @@ return(plot)
   selectedorder1 <- reactive({
     switch(input$basic1,
            "bin" = ceshi1$sourcename[order(ceshi1$bin,decreasing=TRUE)],
+           "repaybin" = ceshi1$sourcename[order(ceshi1$rbin,decreasing=TRUE)],
            "tengxun"   = ceshi1$sourcename[order(ceshi1$tc,decreasing=TRUE)],
            "jd"  = ceshi1$sourcename[order(ceshi1$jd,decreasing=TRUE)],
            "umeng"  = ceshi1$sourcename[order(ceshi1$um,decreasing=TRUE)]
@@ -1219,13 +1294,12 @@ return(plot)
   })
     
 output$plot62 <- renderChart2({
-#bo=selectedcolumn1()[!is.na(selectedcolumn1()$edu),]
 bo=data.frame(table(melt(selectedcolumn1(),id=c("sourcename","edu"))))
 bo$sourcename <- factor(bo$sourcename,levels=selectedorder1())
 plot <- hPlot(Freq~sourcename, data = bo,group = "edu",type = "column",title=sprintf("大额APP渠道%s分布",input$basic1))
 plot$plotOptions(column = list(stacking = "percent"))
-if(input$basic1 %in% c("bin","tengxun")){
-plot$yAxis(reversedStacks = FALSE) }
+if(input$basic1 %in% c("bin","repaybin","tengxun")){
+    plot$yAxis(reversedStacks = FALSE) }
 return(plot)    
 })
 
@@ -1320,28 +1394,28 @@ output$sp1<-renderPlot({
 })
 
 output$sp2<-renderPlot({ 
-      mm2=score[,c(1,5:8)]
+      mm2=score[,c(1,5:9)]
       mm2=mm2[mm2$sourcename %in% input$spider,] %>% mutate_at(vars(bin:jd),funs(rescale))
       rada=ggradar(mm2,axis.label.size = 5,legend.text.size = 16)
   return(rada)  
 })
 
 output$sp3<-renderPlot({ 
-      mm3=score[,c(1,9:11)]
+      mm3=score[,c(1,10:12)]
       mm3=mm3[mm3$sourcename %in% input$spider,] %>% mutate_at(vars(max_creditcard:salary),funs(rescale))
       rada=ggradar(mm3,axis.label.size = 5,legend.text.size = 16)
   return(rada)  
 })
 
 output$sp4<-renderPlot({ 
-      mm4=score[,c(1,12:14)]
+      mm4=score[,c(1,13:15)]
       mm4=mm4[mm4$sourcename %in% input$spider,] %>% mutate_at(vars(boapp:zx_query),funs(rescale))
       rada=ggradar(mm4,axis.label.size = 5,legend.text.size = 16)
   return(rada)  
 })
 
 output$sp5<-renderPlot({ 
-      mm5=score[,c(1,15:16)]
+      mm5=score[,c(1,16:17)]
       mm5=mm5[mm5$sourcename %in% input$spider,] %>% mutate_at(vars(ovd_msg:overdue_zx),funs(rescale))
       rada=ggradar(mm5,axis.label.size = 5,legend.text.size = 16)
   return(rada)  
@@ -1350,7 +1424,7 @@ output$sp5<-renderPlot({
 output$sp6<-renderPlot({ 
       mm6=score %>% group_by(sourcename) %>%
       summarise(basicinfo=edu+city+usertype,
-      model=(bin*2+tengxun*1+umeng*1+jd)/5,
+      model=(bin*2+rbin*2+tengxun*1+umeng*1+jd)/7,
       asset=salary+max_creditcard+max_otherloan,
       multiloan=boapp+tongdun+zx_query,
       ovd=ovd_msg+overdue_zx )

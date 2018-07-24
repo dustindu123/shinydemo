@@ -115,11 +115,14 @@ tabItems(
                ),
           box(selectInput('mode2',h3('筛选比较内容'), c("mode type","line type","channel type")),width = 12),
           box(showOutput("plot13","highcharts")),
+          box(showOutput("plot13_repay","highcharts")),
           box(showOutput("plot16","highcharts")),
           box(showOutput("plot19","highcharts")),
           box(showOutput("plot22","highcharts")),
           box(showOutput("plot14","highcharts")),
-          box(showOutput("plot15","highcharts")),   
+          box(showOutput("plot15","highcharts")),
+          box(showOutput("plot14_repay","highcharts")),
+          box(showOutput("plot15_repay","highcharts")),   
           box(showOutput("plot17","highcharts")),
           box(showOutput("plot18","highcharts")),  
           box(showOutput("plot20","highcharts")),
@@ -247,7 +250,8 @@ tabItems(
                format = "yyyy-mm-dd"),width = 12
                ),
           box(dataTableOutput("rate1")),
-          box(dataTableOutput("rate2"))
+          box(dataTableOutput("rate2")),
+          box(dataTableOutput("rate3"))
         )
       
       ),
@@ -278,7 +282,7 @@ tabItems(
           box(showOutput("plot61","highcharts")), 
           box(plotOutput("sp1")),
 ##
-          box(selectInput('basic1',h3('模型类评分'), c("bin","tengxun", "jd","umeng")),width = 12),
+          box(selectInput('basic1',h3('模型类评分'), c("bin","repaybin","tengxun", "jd","umeng")),width = 12),
           box(showOutput("plot62","highcharts")) , 
           box(plotOutput("sp2")),
 ##
@@ -292,7 +296,8 @@ tabItems(
 ##
           box(selectInput('basic4',h3('逾期数据'), c("overdue message count","credit report overdue_2y")),width = 12),
           box(showOutput("plot65","highcharts")) ,
-          box(plotOutput("sp5"))
+          box(plotOutput("sp5")),
+          box(dataTableOutput("rate4"),width=12)
           )
       ),
       tabItem("M站推广渠道", "渠道质量监控 tab content")
