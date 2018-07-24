@@ -127,7 +127,7 @@ cusChange=function(input,data){
         data$linetype <- factor(data$linetype,levels=c("gjj","wb","bb","tb","oth"))
         }else{
             if(input=="channel type"){
-                data$linetype <- factor(data$linetype,levels=c("APP信息流","APP贷超","其他大额渠道类型","异业合作","大额主营","小额"))
+                data$linetype <- factor(data$linetype,levels=c("APP信息流","APP贷超","M站信息流","M站贷超","其他大额渠道类型","异业合作","大额主营","小额"))
             }
         }
     return(data)

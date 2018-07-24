@@ -633,10 +633,21 @@ basic$new1=NULL
 ##渠道各种率展示
 channel <- dbGetQuery(con, "select  * from appzc.dx_channelmonitor_basicinfo")
 #################################渠道大类
+channel_app=channel[channel$sourcetype=="app",]
+channel_m=channel[channel$sourcetype=="M",]
+
 channel_sub=read.csv("D:/shinydemo/shiny_forgithub/channel_sub.csv",header = TRUE,stringsAsFactors = FALSE)
-ch=unique(channel_sub[channel_sub$渠道标签 %in% c("APP贷超","APP信息流","异业合作") ,])
-names(ch)[2]="channel_category"
-channel1=merge(channel,ch,"sourcename",all.x = T)
+ch_app=unique(channel_sub[channel_sub$渠道标签 %in% c("APP贷超","APP信息流") ,])
+ch_m=unique(channel_sub[channel_sub$渠道标签 %in% c("M站贷超","M站信息流") ,])
+#ch_yi=unique(channel_sub[channel_sub$渠道标签 =="异业合作" ,])
+
+names(ch_app)[2]="channel_category"
+names(ch_m)[2]="channel_category"
+
+channel_app=merge(channel_app,ch_app,"sourcename",all.x = T)
+channel_m=merge(channel_m,ch_m,"sourcename",all.x = T)
+channel1=rbind(channel_app,channel_m)
+
 ##################################
 
 
@@ -892,7 +903,7 @@ basic2=basic[basic$linetype =="小额",]
 basic3=basic[basic$linetype=="大额渠道",]
 
 
-basic1=basic1[basic1$rand %in% sample(0:999,600),]
+basic1=basic1[basic1$rand %in% sample(0:999,550),]
 basic2=basic2[basic2$rand %in% sample(0:999,200),]
 basic=rbind(basic1,basic2,basic3)
 
