@@ -913,8 +913,8 @@ basic2=basic[basic$linetype =="小额",]
 basic3=basic[basic$linetype=="大额渠道",]
 
 set.seed(6666)
-basic1=basic1[basic1$rand %in% sample(0:999,550),]
-basic2=basic2[basic2$rand %in% sample(0:999,200),]
+basic1=basic1[basic1$rand %in% sample(0:999,600),]
+basic2=basic2[basic2$rand %in% sample(0:999,250),]
 basic=rbind(basic1,basic2,basic3)
 
 basic=merge(basic,channel1[channel1$chuo_status==1&!is.na(channel1$channel_category),c(which(names(channel1)=="userid"),which(names(channel1)=="channel_category"))],"userid",all.x=T)
