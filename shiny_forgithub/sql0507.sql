@@ -630,13 +630,20 @@ isNa=function(x)
     return(rr)}
     
 basic$new1=apply(basic[,which(names(basic)=="jdcredit_score"):which(names(basic)=="coverdue2y")],1,isNa)
-basic=basic[-which(basic$new1>=0.75&basic$linetype %in% c("大额主营","大额渠道")),]
+basic=basic[-which(basic$new1>=0.75&basic$linetype %in% c("大额主营","大额渠道",'大额_m')),]
 basic$new1=NULL
 ##渠道各种率展示
-channel <- dbGetQuery(con, "select  * from appzc.dx_channelmonitor_basicinfo")
+channel_tot <- dbGetQuery(con, "select  * from appzc.dx_channelmonitor_basicinfo")
+channel_app= channel_tot[channel_tot$qudao_type=="APP",]
+channel_m= channel_tot[channel_tot$qudao_type=="M",]
+
 #################################渠道大类
-channel_app=channel[channel$sourcetype=="app",]
-channel_m=channel[channel$sourcetype=="M",]
+channel_app1=channel_app[channel_app$sourcetype=="app",]
+channel_m1=channel_app[channel_app$sourcetype=="M",]
+
+channel_app2=channel_m[channel_m$sourcetype=="app",]
+channel_m2=channel_m[channel_m$sourcetype=="M",]
+
 
 channel_sub=read.csv("D:/shinydemo/shiny_forgithub/channel_sub.csv",header = TRUE,stringsAsFactors = FALSE)
 ch_app=unique(channel_sub[channel_sub$渠道标签 %in% c("APP贷超","APP信息流") ,])
@@ -646,9 +653,13 @@ ch_m=unique(channel_sub[channel_sub$渠道标签 %in% c("M站贷超","M站信息
 names(ch_app)[2]="channel_category"
 names(ch_m)[2]="channel_category"
 
-channel_app=merge(channel_app,ch_app,"sourcename",all.x = T)
-channel_m=merge(channel_m,ch_m,"sourcename",all.x = T)
-channel1=rbind(channel_app,channel_m)
+channel_app1=merge(channel_app1,ch_app,"sourcename",all.x = T)
+channel_m1=merge(channel_m1,ch_m,"sourcename",all.x = T)
+channel_app=rbind(channel_app1,channel_m1)
+
+channel_app2=merge(channel_app2,ch_app,"sourcename",all.x = T)
+channel_m2=merge(channel_m2,ch_m,"sourcename",all.x = T)
+channel_m=rbind(channel_app2,channel_m2)
 
 ##################################
 
@@ -911,11 +922,16 @@ basic$rand=basic$userid%%1000
 basic1=basic[basic$linetype =="大额主营",]
 basic2=basic[basic$linetype =="小额",]
 basic3=basic[basic$linetype=="大额渠道",]
+basic4=basic[basic$linetype =="大额_m",]
+basic5=basic[basic$linetype=="小额_m",]
+
 
 set.seed(6666)
 basic1=basic1[basic1$rand %in% sample(0:999,600),]
-basic2=basic2[basic2$rand %in% sample(0:999,250),]
-basic=rbind(basic1,basic2,basic3)
+basic2=basic2[basic2$rand %in% sample(0:999,200),]
+basic5=basic5[basic5$rand %in% sample(0:999,100),]
+
+basic=rbind(basic1,basic2,basic3,basic4,basic5)
 
 basic=merge(basic,channel1[channel1$chuo_status==1&!is.na(channel1$channel_category),c(which(names(channel1)=="userid"),which(names(channel1)=="channel_category"))],"userid",all.x=T)
 basic$channel_total_category=ifelse(!is.na(basic$channel_category),basic$channel_category,ifelse(basic$linetype=="大额渠道","其他大额渠道类型",basic$linetype))

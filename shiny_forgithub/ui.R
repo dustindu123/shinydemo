@@ -29,10 +29,13 @@ channel$first_login_time=as.character(channel$first_login_time)
 
 channeleva=read.table("channeleva.txt",header = TRUE,sep="",fileEncoding="UTF-8",row.names = NULL) ###正确
 channeleva$firstchuo=as.character(channeleva$firstchuo)
-channeleva1=channeleva[channeleva$sourcetype=="app",]
-channeleva2=channeleva[channeleva$sourcetype=="M",]
-dx=channeleva1 %>% group_by(sourcename) %>% 
+
+dx1=channeleva[channeleva$qudao_type=="APP",] %>% group_by(sourcename) %>% 
 summarise(chuonum=n())
+
+dx2=channeleva[channeleva$qudao_type=="M",] %>% group_by(sourcename) %>% 
+summarise(chuonum=n())
+
 
 
 ####
@@ -81,6 +84,7 @@ tabItems(
               hr(),
               width = 12
                ),
+          box(selectInput('line',h3('筛选业务线'), c("APP","M站")),width = 12),
           box(selectInput('mode1',h3('筛选比较内容'), c("mode type","line type","channel type")),width = 12),
           box(showOutput("plot10","highcharts")),
           box(showOutput("plot1","highcharts")),
@@ -113,6 +117,7 @@ tabItems(
               hr(),
               width = 12
                ),
+          box(selectInput('line1',h3('筛选业务线'), c("APP","M站")),width = 12),
           box(selectInput('mode2',h3('筛选比较内容'), c("mode type","line type","channel type")),width = 12),
           box(showOutput("plot13","highcharts")),
           box(showOutput("plot13_repay","highcharts")),
@@ -144,6 +149,7 @@ tabItems(
               hr(),
               width = 12
                ),
+          box(selectInput('line2',h3('筛选业务线'), c("APP","M站")),width = 12),
           box(selectInput('mode3',h3('筛选比较内容'), c("mode type","line type","channel type")),width = 12),
           box(showOutput("plot25","highcharts")),
           box(showOutput("plot26","highcharts")),
@@ -165,7 +171,8 @@ tabItems(
               h3("筛选时间,查看不同时间段内的各维度信息。"),
               hr(),
               width = 12
-               ),
+               ), 
+          box(selectInput('line4',h3('筛选业务线'), c("APP","M站")),width = 12),
           box(selectInput('mode5',h3('筛选比较内容'), c("mode type","line type","channel type")),width = 12),
           box(showOutput("plot43","highcharts")),
           box(showOutput("plot46","highcharts")),
@@ -191,6 +198,7 @@ tabItems(
               hr(),
               width = 12
                ),
+          box(selectInput('line5',h3('筛选业务线'), c("APP","M站")),width = 12),
           box(selectInput('mode6',h3('筛选比较内容'), c("mode type","line type","channel type")),width = 12),
           box(showOutput("plot52","highcharts")),
           box(showOutput("plot55","highcharts")),
@@ -216,6 +224,7 @@ tabItems(
               h3("筛选时间,查看不同时间段内的各维度信息。"),
               hr(),
               width = 12               ),
+          box(selectInput('line3',h3('筛选业务线'), c("APP","M站")),width = 12),
           box(selectInput('mode4',h3('筛选比较内容'), c("mode type","line type","channel type")),width = 12),
           box(showOutput("plot28","highcharts")),
           box(showOutput("plot31","highcharts")),
@@ -249,9 +258,11 @@ tabItems(
                max = as.character(format(as.Date(max(channel$first_login_time))),"yyyy-mm-dd"),
                format = "yyyy-mm-dd"),width = 12
                ),
-          box(dataTableOutput("rate1")),
-          box(dataTableOutput("rate2")),
-          box(dataTableOutput("rate3"))
+          box(selectInput('line6',h3('筛选业务线'), c("APP","M")),width = 12),
+          box(dataTableOutput("rate1"),width = 12),
+          box(dataTableOutput("rate2"),width = 12),
+          box(dataTableOutput("rate3"),width = 12),
+          box(dataTableOutput("rate5"),width = 12)
         )
       
       ),
@@ -263,20 +274,24 @@ tabItems(
          #       c("app","M"))
          #      ),
           box(dateRangeInput("dates9", "Select the date range:",
-               start = as.character(format(as.Date(min(channeleva1$firstchuo))),"yyyy-mm-dd"),             
-               end = as.character(format(as.Date(max(channeleva1$firstchuo))),"yyyy-mm-dd"),
-               min = as.character(format(as.Date(min(channeleva1$firstchuo))),"yyyy-mm-dd"),               
-               max = as.character(format(as.Date(max(channeleva1$firstchuo))),"yyyy-mm-dd"),
+               start = as.character(format(as.Date(min(channeleva$firstchuo))),"yyyy-mm-dd"),             
+               end = as.character(format(as.Date(max(channeleva$firstchuo))),"yyyy-mm-dd"),
+               min = as.character(format(as.Date(min(channeleva$firstchuo))),"yyyy-mm-dd"),               
+               max = as.character(format(as.Date(max(channeleva$firstchuo))),"yyyy-mm-dd"),
                format = "yyyy-mm-dd"),
               hr(),
               h3("筛选时间,查看不同时间段内的信息。"),
               width = 12),
+          box(selectInput('line7',h3('筛选业务线'), c("APP","M")),width = 12),
           box(
            checkboxGroupInput("spider", 
                               h4("渠道选择(戳额数>200的渠道)"), 
-                              choices = dx$sourcename[dx$chuonum>200],
-                              selected = c("广点通","亿玛dsp","今日头条大额")),          
+                              choices ="神马SEM大额",
+                              selected = "神马SEM大额"
+                              ),          
           width = 12          ),
+          
+          #htmlOutput("dx"),
           box(plotOutput("sp6"),width = 12),
           box(selectInput('basic',h4('基本信息'), c("edu","usertype", "citylevel")),width = 12),
           box(showOutput("plot61","highcharts")), 

@@ -1,0 +1,1141 @@
+drop table if exists appzc.dx_flowmonitor_basicinfo;
+create table appzc.dx_flowmonitor_basicinfo
+    as
+select
+    userid,
+    inserttime ,
+    credit_bin,
+    firstchuo, 
+    firstchuo_m,
+    week,
+    dweek,
+    dyear,
+    age,
+    /*gender, */
+    edu_cert,
+    edu,
+    chuomode,
+    message_count_default,
+    boappnum,
+    linetype,
+    'APP' as biglinetype
+
+
+from (
+    select 
+    mmv.userid,
+    mmv.inserttime ,
+    mmv.credit_bin,
+    substring(mmv.inserttime,1,10) as firstchuo,
+    substring(mmv.inserttime,1,7) as firstchuo_m,    
+    case when weekofyear(days_sub(mmv.inserttime,6)) = weekofyear(mmv.inserttime) then concat(cast(year(days_sub(mmv.inserttime,6)) as string),'-',cast(weekofyear(days_sub(mmv.inserttime,6)) as string))
+    else concat(cast(year(mmv.inserttime) as string),'-',cast(weekofyear(mmv.inserttime) as string)) end as week,
+    case when weekofyear(days_sub(mmv.inserttime,6)) = weekofyear(mmv.inserttime) then year(days_sub(mmv.inserttime,6)) else  year(mmv.inserttime) end as dyear,
+    case when weekofyear(days_sub(mmv.inserttime,6)) = weekofyear(mmv.inserttime) then weekofyear(days_sub(mmv.inserttime,6)) else  weekofyear(mmv.inserttime) end as dweek,
+    mmv.age,
+    /*gender, */
+    mmv.edu_cert,
+    message_count_default,
+    boappnum,
+    case when first_chuo_mark like '%wb%' then 'wb'
+         when first_chuo_mark like '%tb%' then 'tb'
+         when first_chuo_mark like '%bb%' then 'bb'
+         when first_chuo_mark like '%fd%' then 'gjj'
+         else 'oth' end as chuomode,    
+    case when mmv.edu_cert='1' then '1研究生' /* 研究生*/
+         when mmv.edu_cert='2' then '2本科' /* 本科*/
+         when mmv.edu_cert='3' then '3专科' /* 专科*/
+         else '4无学历' end as edu, 
+    case when b.userid is not null then '大额渠道' else '大额主营' end as linetype,
+    ROW_NUMBER()over(partition by mmv.userid order by mmv.inserttime asc) as flag
+    from ods.mobilemodelvariable mmv
+    
+    inner join [shuffle] appzc.dx_datatable_chuo a 
+    on mmv.userid=a.userid
+    and a.chuo_status=1
+
+    left join [shuffle] appzc.dx_dae_user_basic b 
+    on mmv.userid=b.userid 
+    and b.if_main=0
+
+    where listingid=-1
+    and months=5 
+    and realname_renren_match in (13003,13002)
+    and gender_renren_match in(301,202)
+    )mm
+where flag=1 and inserttime >='2018-04-24'
+
+union all 
+
+select
+    userid,
+    inserttime ,
+    credit_bin,
+    firstchuo, 
+    firstchuo_m,
+    week,
+    dweek,
+    dyear,
+    age,
+    /*gender, */
+    edu_cert,
+    edu,
+    chuomode,
+    message_count_default,
+    boappnum,
+    '小额' as linetype,
+    'APP' as biglinetype
+
+
+from (
+    select 
+    mmv.userid,
+    mmv.inserttime ,
+    mmv.credit_bin,
+    substring(mmv.inserttime,1,10) as firstchuo, 
+    substring(mmv.inserttime,1,7) as firstchuo_m,    
+    case when weekofyear(days_sub(mmv.inserttime,6)) = weekofyear(mmv.inserttime) then concat(cast(year(days_sub(mmv.inserttime,6)) as string),'-',cast(weekofyear(days_sub(mmv.inserttime,6)) as string))
+    else concat(cast(year(mmv.inserttime) as string),'-',cast(weekofyear(mmv.inserttime) as string)) end as week,
+    case when weekofyear(days_sub(mmv.inserttime,6)) = weekofyear(mmv.inserttime) then year(days_sub(mmv.inserttime,6)) else  year(mmv.inserttime) end as dyear,
+    case when weekofyear(days_sub(mmv.inserttime,6)) = weekofyear(mmv.inserttime) then weekofyear(days_sub(mmv.inserttime,6)) else  weekofyear(mmv.inserttime) end as dweek,
+    mmv.age,
+    /*gender, */
+    mmv.edu_cert,
+    message_count_default,
+    boappnum,
+    case when first_chuo_mark like '%wb%' then 'wb'
+         when first_chuo_mark like '%tb%' then 'tb'
+         when first_chuo_mark like '%bb%' then 'bb'
+         when first_chuo_mark like '%fd%' then 'gjj'
+         else 'oth' end as chuomode,        
+    
+    case when mmv.edu_cert='1' then '1研究生' /* 研究生*/
+         when mmv.edu_cert='2' then '2本科' /* 本科*/
+         when mmv.edu_cert='3' then '3专科' /* 专科*/
+         else '4无学历' end as edu, 
+    ROW_NUMBER()over(partition by mmv.userid order by mmv.inserttime asc) as flag
+    
+    from ods.mobilemodelvariable mmv
+
+    inner join [shuffle] appzc.dx_datatable_chuo a 
+    on mmv.userid=a.userid
+    and a.log_status=0
+    and chuo_status=0
+
+    where listingid=-1
+    and realname_renren_match =11001 
+    and gender_renren_match=101 
+    and substr(mark,1,2) in ('1','2','3','4','5','2.','3.','4.','5.')
+
+    )mm
+where 
+    flag=1 
+    and  inserttime >='2018-04-24'
+    
+union all
+    
+select
+    userid,
+    inserttime ,
+    credit_bin,
+    firstchuo, 
+    firstchuo_m,
+    week,
+    dweek,
+    dyear,
+    age,
+    /*gender, */
+    edu_cert,
+    edu,
+    chuomode,
+    message_count_default,
+    boappnum,
+    linetype,
+    'M站' as biglinetype
+
+from (
+    select 
+    mmv.userid,
+    mmv.inserttime ,
+    mmv.credit_bin,
+    substring(mmv.inserttime,1,10) as firstchuo,
+    substring(mmv.inserttime,1,7) as firstchuo_m,    
+    case when weekofyear(days_sub(mmv.inserttime,6)) = weekofyear(mmv.inserttime) then concat(cast(year(days_sub(mmv.inserttime,6)) as string),'-',cast(weekofyear(days_sub(mmv.inserttime,6)) as string))
+    else concat(cast(year(mmv.inserttime) as string),'-',cast(weekofyear(mmv.inserttime) as string)) end as week,
+    case when weekofyear(days_sub(mmv.inserttime,6)) = weekofyear(mmv.inserttime) then year(days_sub(mmv.inserttime,6)) else  year(mmv.inserttime) end as dyear,
+    case when weekofyear(days_sub(mmv.inserttime,6)) = weekofyear(mmv.inserttime) then weekofyear(days_sub(mmv.inserttime,6)) else  weekofyear(mmv.inserttime) end as dweek,
+    mmv.age,
+    /*gender, */
+    mmv.edu_cert,
+    message_count_default,
+    boappnum,
+    case when gxb.userid is not null and bb.userid is not null then 'both_m'
+         when gxb.userid is not null and bb.userid is     null then 'gxb_m'
+         when gxb.userid is     null and bb.userid is not null then 'bb_m'
+         else 'oth_m' end as chuomode,    
+    case when mmv.edu_cert='1' then '1研究生' /* 研究生*/
+         when mmv.edu_cert='2' then '2本科' /* 本科*/
+         when mmv.edu_cert='3' then '3专科' /* 专科*/
+         else '4无学历' end as edu, 
+    '大额_m' as linetype,
+    ROW_NUMBER()over(partition by mmv.userid order by mmv.inserttime asc) as flag
+    from ods.mobilemodelvariable mmv
+    
+    inner join [shuffle] appzc.dx_m_login b 
+    on mmv.userid=b.userid 
+
+    left  join [shuffle] 
+    (select 
+        distinct user_id as userid
+        from  ods.bigm_user_activity
+        where 
+        content like '%通过%' 
+        and  (content like '%taobao%' or  content like '%淘宝%')
+        and tag='bigger-e' 
+        and  event_id like '%success%'
+        and activity_time>='2018-06-28') gxb 
+    on b.userid=gxb.userid 
+    --and b.first_login_m_dt<gxb.inserttime
+    --and mmv.inserttime>gxb.inserttime
+    
+    left  join [shuffle] 
+    (select 
+        distinct user_id as userid
+        from  ods.bigm_user_activity
+        where 
+        content like '%通过%' 
+        and  (content like '%bankbill%' or  content like '%网银%')
+        and tag='bigger-e' 
+        and  event_id like '%success%'
+        and activity_time>='2018-06-28') bb 
+    on b.userid=bb.userid 
+    
+    where listingid=-1
+    and months=55 
+    and realname_renren_match in (23002,23006)
+    )mm
+where flag=1 and inserttime >='2018-06-28'
+
+union all 
+
+select
+    userid,
+    inserttime ,
+    credit_bin,
+    firstchuo, 
+    firstchuo_m,
+    week,
+    dweek,
+    dyear,
+    age,
+    /*gender, */
+    edu_cert,
+    edu,
+    chuomode,
+    message_count_default,
+    boappnum,
+    '小额_m' as linetype,
+    'M站' as biglinetype
+
+
+from (
+    select 
+    mmv.userid,
+    mmv.inserttime ,
+    mmv.credit_bin,
+    substring(mmv.inserttime,1,10) as firstchuo, 
+    substring(mmv.inserttime,1,7) as firstchuo_m,    
+    case when weekofyear(days_sub(mmv.inserttime,6)) = weekofyear(mmv.inserttime) then concat(cast(year(days_sub(mmv.inserttime,6)) as string),'-',cast(weekofyear(days_sub(mmv.inserttime,6)) as string))
+    else concat(cast(year(mmv.inserttime) as string),'-',cast(weekofyear(mmv.inserttime) as string)) end as week,
+    case when weekofyear(days_sub(mmv.inserttime,6)) = weekofyear(mmv.inserttime) then year(days_sub(mmv.inserttime,6)) else  year(mmv.inserttime) end as dyear,
+    case when weekofyear(days_sub(mmv.inserttime,6)) = weekofyear(mmv.inserttime) then weekofyear(days_sub(mmv.inserttime,6)) else  weekofyear(mmv.inserttime) end as dweek,
+    mmv.age,
+    /*gender, */
+    mmv.edu_cert,
+    message_count_default,
+    boappnum,
+    'xiaoe_m' chuomode,        
+    
+    case when mmv.edu_cert='1' then '1研究生' /* 研究生*/
+         when mmv.edu_cert='2' then '2本科' /* 本科*/
+         when mmv.edu_cert='3' then '3专科' /* 专科*/
+         else '4无学历' end as edu, 
+    ROW_NUMBER()over(partition by mmv.userid order by mmv.inserttime asc) as flag
+    
+    from ods.mobilemodelvariable mmv
+
+    where listingid=-1
+    and realname_renren_match =21002
+    and mmv.userid not in (select userid from appzc.dx_m_login) 
+    )mm
+where 
+    flag=1 
+    and inserttime >='2018-06-28';
+    
+    
+ 
+
+
+
+/* 基本信息展示*/
+drop table if exists appzc.dx_flowmonitor_basicinfo1;
+create table appzc.dx_flowmonitor_basicinfo1
+    as
+select 
+    distinct *
+    from (
+    select 
+    a.*,
+    /*cmstr_idnm_pro as id_pro,
+    cmstr_idnm_city as id_city,
+    cmstr_pho_pro as pho_pro,*/
+    cmstr_pho_pro as pho_pro,
+    cmstr_pho_cit as pho_city,
+    c.citylevel as citylevel_pho 
+    /*d.`level` as citylevel_id */
+
+    from appzc.dx_flowmonitor_basicinfo a
+
+left join [shuffle] 
+    edw.common_user_daily b
+on a.userid=b.user_id
+   and b.dt=strleft(cast(date_add(now(),-1) as string),10)
+
+left join [shuffle] 
+    appzc.yqqcsd_citylevel  c 
+on b.cmstr_pho_cit=c.city
+    ) dx2 ;
+
+
+
+drop table if exists appzc.dx_flowmonitor_basicinfo2;
+create table appzc.dx_flowmonitor_basicinfo2
+    as 
+select 
+    a.*, 
+    case when cj.userid is not null then '2成交'
+         when cj.userid is null and fb.userid is not null then '2发标未成交'
+         when youe.userid is not null and fb.userid is null then '4有额未发标'
+         when chuoe.userid is not null and youe.userid is null then '1戳额无额度'
+         when chuoe.userid is null then '5纯新'
+         else 'other'  end as usertype
+from 
+    appzc.dx_flowmonitor_basicinfo1 a 
+left join 
+    appzc.dx_chuoe chuoe 
+on 
+    a.inserttime>chuoe.inserttime and a.userid=chuoe.userid 
+left join 
+    appzc.dx_youe youe 
+on 
+    a.inserttime>youe.inserttime 
+    and a.userid=youe.userid 
+left join 
+    appzc.dx_fb fb 
+on 
+    a.inserttime>fb.inserttime 
+    and a.userid=fb.userid 
+left join 
+    appzc.dx_cj cj 
+on 
+    a.inserttime>cj.auditingdate 
+    and a.userid=cj.userid ;
+
+ 
+ 
+/* 模型类评分*/
+
+drop table if exists appzc.dx_flowmonitor_basicinfo3;
+create table appzc.dx_flowmonitor_basicinfo3
+    as 
+select * 
+from 
+   (select 
+    a.*,
+    cast(b.score as decimal(38,2)) as jdcredit_score,
+    c.credit_score as umeng_score,
+    d.risk_score,
+    row_number()over(partition by a.userid order by b.inserttime desc, c.inserttime desc, d.inserttime desc) fl
+    from 
+    appzc.dx_flowmonitor_basicinfo2 a
+    left join ods.jdcredit_score b on a.userid=b.userid and a.inserttime>b.inserttime
+    left join ods.umeng_newscoreinfos c on a.userid=c.userid and a.inserttime>c.inserttime
+    left join ods.social_score_info d on a.userid=d.userid  and a.inserttime>d.inserttime 
+    ) dx
+where fl=1;
+/* 资产*/
+--税前收入
+drop table if exists appzc.dx_flowmonitor_basicinfo4;
+create table appzc.dx_flowmonitor_basicinfo4
+    as 
+select * 
+from 
+    (select  
+        a.*, 
+        case when b.`result` is null or `result` in ('-1','-2','-3') then 'missing'
+             when b.`result`='0' then '0-0'
+             when b.`result` in ('a','b') then '0-02k'
+             when b.`result` in ('c','d','e') then '02k-05k'
+             when b.`result` in ('f','g','h') then '05k-08k'
+             when b.`result` in ('i','j','k','l','m','n','o') then '08k-15k'
+             when b.`result` in ('p','q','r','s','t','u','v','w','x','y') then '15k-30k'
+             else '30k+'
+             end as pretax ,
+        --cast(h.salaryincomeamountaverage6m as decimal(38,2)) as wangyin,
+        --cast(w.fundbasenumber as decimal(38,2))  as gjj,
+        --case when ys.userid is not null then 1 else 0 end as iscar,
+        --case when ly.userid is not null then 1 else 0 end as ishouse,
+        row_number() over(partition by a.userid order by b.inserttime desc) fl1
+from appzc.dx_flowmonitor_basicinfo3 a 
+
+left join 
+    ods.pretax_income_level b 
+on 
+    a.userid=b.userid and a.inserttime>b.inserttime
+/*
+left join 
+    ods.bankbill_report_debitcard_details h 
+on 
+    a.userid=h.userid and a.inserttime>h.inserttime
+
+left join 
+    (select
+    ppduserid as userid,
+    inserttime,
+    case when base_number=0 or base_number is null then (monthly_total_income/200)/0.085 else base_number/100 end as fundbasenumber
+    from ods.fund_userinfo )w
+    on a.userid=w.userid and a.inserttime>w.inserttime
+
+left join 
+(select distinct userid
+from (
+select userid 
+from ods.rhzx_user_loanotherdetails  
+where purpose='3' 
+
+union all
+ 
+select userid
+from ods.CRD_CD_LN 
+where type_dw like '%汽车%') c ) ys
+on a.userid=ys.userid 
+
+left join 
+(select distinct userid
+from (
+select userid 
+from ods.rhzx_user_loanhouse
+
+
+union all
+ 
+select userid
+from ods.CRD_CD_LN 
+where type_dw like '%房%') d ) ly
+on a.userid=ly.userid */
+
+
+) t 
+where fl1=1 ;
+
+/* 多头*/
+drop table if exists appzc.dx_flowmonitor_basicinfo5;
+create table appzc.dx_flowmonitor_basicinfo5
+    as 
+select *
+from 
+    (select 
+    a.*,
+    b.final_score,
+    P2P_3m+small_loan_id_3m as td_3m,
+    P2P_1m+small_loan_id_1m as td_1m,
+    row_number() over(partition by a.userid order by b.inserttime desc) fl2
+    from appzc.dx_flowmonitor_basicinfo4 a
+    left join [shuffle] ods.tongdun_data b 
+    on a.userid=b.userid 
+    and a.inserttime>b.inserttime
+    left join [shuffle] 
+    (select 
+     userid
+    ,inserttime
+    ,max(case when ruleid='3244586' then nvl(p2p_net_loan_idcard,0) else 0 end ) P2P_3m    
+    ,max(case when ruleid='3244584' then nvl(p2p_net_loan_idcard,0) else 0 end ) P2P_1m
+    ,max(case when ruleid='3244586' then nvl(small_loan_idcard,0) else 0 end ) small_loan_id_3m
+    ,max(case when ruleid='3244584' then nvl(small_loan_idcard,0) else 0 end ) small_loan_id_1m
+    from edw.tongdun_ruledetail
+    group by userid,inserttime
+    ) c 
+    on a.userid=c.userid 
+    and a.inserttime>c.inserttime 
+    ) dx
+where fl2=1;
+
+--资质和负债
+drop table if exists appzc.dx_flowmonitor_basicinfo6;
+create table appzc.dx_flowmonitor_basicinfo6
+as 
+select 
+dx.*, 
+cmax,
+omax,
+vcard,
+rph,
+rpo,
+rpc,
+vloan,
+vvloan,
+query1m,
+hoverdue2y,
+ooverdue2y,
+coverdue2y,
+ly.json_repaybin as repaybin
+
+
+
+from appzc.dx_flowmonitor_basicinfo5 dx 
+
+left join [shuffle]
+(
+select *
+from 
+(
+select 
+userid,
+cmax,
+omax,
+vcard,
+rph,
+rpo,
+rpc,
+vloan,
+vvloan,
+query1m,
+hoverdue2y,
+ooverdue2y,
+coverdue2y,
+ROW_NUMBER()over(partition by userid order by json_inserttime asc) as flag1
+from 
+(
+select *
+from (
+select 
+userid, 
+json_inserttime,
+json_max_ccard_amount cmax,
+json_otherLoanMaxAmount omax,
+json_cnt_valid_ccard  vcard,
+
+json_repayamount_loanhouse_month as rph,
+cast(json_repayamount_loanother_month as decimal(32,4)) as rpo,
+cast(json_repayamount_creditcard_month as decimal(32,4)) as rpc,
+json_validotherloannum vloan,
+json_unsettledvalidotherloannum vvloan,
+'-100' as query1m,
+'-100' as hoverdue2y,
+'-100' as ooverdue2y,
+'-100' as coverdue2y,
+ROW_NUMBER()over(partition by userid order by json_inserttime asc) as flag
+
+
+from  edw.userpataresult
+where json_bizid ='13002'
+      and dt>='2018-04-24' 
+      and json_flow_count='1' ) a  where flag=1
+ 
+union all  
+
+select *
+from (
+select 
+pa.userid,
+json_inserttime, 
+json_zxFull_maxCCardAmountFull as cmax,
+json_otherLoanMaxAmountFull as omax,
+json_zxFull_cntValidCCardFull as vcard,
+json_houseLoanEveryMonthPaypalAmount rph,
+rpo,
+rpc,
+json_validotherloannumfull vloan,
+json_unsettledvalidotherloannum vvloan, 
+json_creditReportOneMonthQueryTimes as query1m,
+json_loanHouseOverdueMonthsInTwoYears as hoverdue2y,
+json_otherLoanOverdueMonthsInTwoYears as ooverdue2y,
+json_ccardOverdueMonthsTwoYears as coverdue2y,
+ROW_NUMBER()over(partition by pa.userid order by json_inserttime asc,gg.inserttime asc,kk.inserttime asc) as flag
+
+
+from  edw.userpataresult pa
+left join 
+(select 
+userid ,
+inserttime,
+sum(cast(regexp_replace(Scheduled_Payment_Amount,',','') as decimal(32,2))) as rpc 
+from  ods.CRD_CD_LND 
+group by userid ,inserttime) gg
+on pa.userid=gg.userid 
+
+left join 
+(select 
+userid,
+inserttime,
+sum(case when  Type_Dw not like '%房%' and  state='正常'  and Payment_Rating='按月归还'  and Remain_Payment_Cyc is not null and Remain_Payment_Cyc not in ('--','')  and  Remain_Payment_Cyc<>'0' then round(cast(regexp_replace(Scheduled_Payment_Amount,',','') as decimal(32,2))) end) as rpo
+from ods.CRD_CD_LN 
+group by userid ,inserttime)kk
+on pa.userid=kk.userid 
+
+where 
+json_bizid in( '13003','23002', '23006')
+and dt>='2018-04-24' 
+and json_flow_count='2' )b where flag=1 ) ly )ys  where flag1=1 )tt
+
+on dx.userid=tt.userid
+
+left join [shuffle]
+( 
+select userid,json_repaybin,
+ROW_NUMBER()over(partition by userid order by json_inserttime asc) as flag
+
+from 
+edw.userpataresult l
+where 
+json_bizid in( '13003','23002', '23006')
+and dt>='2018-04-24' 
+and json_flow_count='1'
+
+)ly
+on dx.userid=ly.userid  
+and ly.flag=1;
+
+drop table if exists appzc.dx_m_login1;
+create table if not exists appzc.dx_m_login1 as
+select 
+user_id as userid,
+min(activity_time) as first_login_time
+from ods.bigm_user_activity
+where event_id='enter-baseinfo'
+and tag='bigger-e'
+group by user_id; 
+
+drop table if exists appzc.dx_m_login;
+create table if not exists appzc.dx_m_login as
+
+select 
+a.*,
+case when cj.userid is not null then '成交'
+     when cj.userid is null and fb.userid is not null then '发标未成交'
+     when youe.userid is not null and fb.userid is null then '有额未发标'
+     when chuoe.userid is not null and youe.userid is null then '戳额无额度'
+     when chuoe.userid is null then '纯新'
+     else 'other'  end as first_login_usertype
+
+from appzc.dx_m_login1 a 
+/* 判断是否成交 */
+left join [shuffle]
+appzc.dx_cj cj
+on a.userid=cj.userid and a.first_login_time>cj.auditingdate
+/* 判断是否发标 */
+left join [shuffle]
+appzc.dx_fb fb
+on a.userid=fb.userid and a.first_login_time>fb.inserttime
+/* 判断是否有额 */
+left join [shuffle]
+appzc.dx_youe youe
+on a.userid=youe.userid and a.first_login_time>youe.inserttime
+/* 判断是否戳额 */
+left join [shuffle]
+appzc.dx_chuoe chuoe
+on a.userid=chuoe.userid and a.first_login_time>chuoe.inserttime;
+
+compute stats  appzc.dx_m_login;
+
+
+--M站大额认证情况
+drop table if exists appzc.dx_datatable_m_verify;
+create table appzc.dx_datatable_m_verify as
+select 
+a.*,
+CASE WHEN id.IDValidate = 1 THEN 1 ELSE 0 END id_verify,
+CASE WHEN  bc.userid is not null THEN 1 ELSE 0 END xiangdan_verify,
+CASE WHEN  tb.userid is not null THEN 1 ELSE 0 END taobao_verify,
+CASE WHEN  sala.userid is not null THEN 1 ELSE 0 END wangyin_verify,
+CASE WHEN  gjj.userid is not null THEN 1 ELSE 0 END gjj_verify,
+CASE WHEN  xiang.userid is not null THEN 1 ELSE 0 END xiangban_verify
+from appzc.dx_m_login a
+--/* 进入过哪些模式 */
+--left join [shuffle] 
+--appzc.dx_datatable_mode mode
+--on a.userID = mode.UserID  
+/* 个人身份认证 */
+left join 
+(
+	select userid,IDValidate
+	from (
+		select userid,IDValidate,
+		ROW_NUMBER()over(partition by userid order by inserttime desc) as flag
+		from ods.User_Validate 
+		) id2 
+	where flag=1 
+	) id on a.userID = id.UserID 
+-- 详单
+left join
+(
+	select userid,max(creationdate) as inserttime 
+	from ods.bill_callphonelogs 
+	group by UserId 
+	) bc on a.userID = bc.userID
+-- 银行卡认证
+left join 
+(
+	select userId,max(inserttime) inserttime 
+	from ods_v.bankaccounts b 
+	group by UserId
+	) ba on a.UserID = ba.UserID  
+/* 淘宝*/
+left join 
+(
+select userId,max(inserttime) inserttime 
+from ods.gxb_ecommerce_baseinfo b 
+group by UserId
+) tb on a.UserID = tb.UserID
+/* 工资卡*/
+left join 
+(
+	select userId,max(inserttime) inserttime 
+	from ods.bankbill_data_basicinfo b 
+	group by UserId
+	) sala on a.UserID = sala.UserID
+/* 公积金*/
+left join 
+(
+	select userId,max(inserttime) inserttime 
+	from ods.fund_userinfo b 
+	group by UserId
+	) gjj on a.UserID = gjj.UserID
+/* 详版*/
+left join 
+(
+	select userId,max(inserttime) inserttime 
+	from ods.CRD_HD_REPORT b 
+	group by UserId
+	) xiang on a.UserID = xiang.UserID
+;
+compute stats  appzc.dx_datatable_m_verify;
+
+
+
+drop table if exists appzc.dx_datatable_m_chuo_pre1;
+create table appzc.dx_datatable_m_chuo_pre1
+  as
+select 
+a.*,
+iii.age,
+iii.edu_cert,
+--首次戳额相关变量
+case when iii.userid is not null then 1 else 0 end as chuo_status,
+iii.userid as chuo_uid,
+iii.firstchuo as first_chuo_time,
+ii.IdolsNumTencent as first_chuo_amount,
+ii.audit_reason as first_chuo_reason,
+ii.credit_bin as first_chuo_bin,
+ii.bill_call_city_top__zero__one_ as first_chuo_flowid,
+ii.school_cert_renren_match as first_chuo_flowcount,
+ii.bill_call_city_top__zero__six_ as first_chuo_testrule,
+case when iii.realname_renren_match=13002 then '简版'
+     when iii.realname_renren_match=13003 then '详版'
+     else '错误'  end as first_chuo_zhengxin,
+ii.mark as first_chuo_mark, --首次戳额的模式
+
+
+
+--首次有额相关变量
+case when jj.userid is not null then 1 else 0 end as youe_status,
+jj.firstyou as first_youe_time,
+jj.IdolsNumTencent as first_youe_amount,
+jj.credit_bin as first_youe_bin,
+case when jj.realname_renren_match=13002 then '简版'
+     when jj.realname_renren_match=13003 then '详版'
+     else '错误'  end as first_youe_zhengxin,
+jj.mark as first_youe_mark--首次有额的模式
+,jj.bill_call_city_top__zero__one_    first_youe_flowid,
+jj.bill_call_city_top__zero__six_ as first_youe_testrule
+
+from appzc.dx_datatable_m_verify  a
+
+--首次戳额1
+
+full outer join [shuffle]
+(
+select userid,firstchuo,realname_renren_match,bill_call_city_top__zero__one_,age,edu_cert
+from 
+(select 
+userid,
+inserttime as firstchuo,
+realname_renren_match,
+bill_call_city_top__zero__one_,age,edu_cert,
+ROW_NUMBER()over(partition by mmv.userid order by inserttime asc) as flag
+from 
+ods.mobilemodelvariable mmv 
+where months=55 and realname_renren_match in (23002,23006) and par_dt>='2018-04'
+and listingid=-1 
+) pp
+where flag=1 )iii
+on a.userid=iii.userid
+
+--首次戳额2
+left join [shuffle]
+(
+select 
+userid,
+firstchuo,
+IdolsNumTencent,
+credit_bin,
+mark,
+audit_reason,
+school_cert_renren_match,
+bill_call_city_top__zero__one_,
+bill_call_city_top__zero__six_,
+realname_renren_match
+from(
+select 
+gg.userid,
+firstchuo,
+IdolsNumTencent,
+credit_bin,
+mark,
+audit_reason,
+realname_renren_match,
+bill_call_city_top__zero__one_,
+bill_call_city_top__zero__six_,
+
+school_cert_renren_match,
+ROW_NUMBER()over(partition by userid order by firstchuo asc) as flag
+from 
+(
+
+select *
+from (
+select 
+userid,
+inserttime as firstchuo,
+IdolsNumTencent,
+credit_bin,
+mark,
+school_cert_renren_match,
+bill_call_city_top__zero__one_,
+bill_call_city_top__zero__six_,
+
+concat(audit_reason,bill_call_city_by_number_top__zero__nine_,bill_call_city_by_number_top__one__zero_) as audit_reason,
+realname_renren_match,
+ROW_NUMBER()over(partition by mmv.userid order by school_cert_renren_match desc, inserttime asc) as flag
+from
+(select *
+from  
+(select 
+userid, inserttime,IdolsNumTencent,credit_bin,mark,school_cert_renren_match,audit_reason,
+bill_call_city_top__zero__one_,
+bill_call_city_top__zero__six_,
+
+bill_call_city_by_number_top__zero__nine_,bill_call_city_by_number_top__one__zero_,realname_renren_match,
+ROW_NUMBER()over(partition by userid order by  inserttime asc) as dx
+from ods.mobilemodelvariable
+where months=55 and realname_renren_match in (23002,23006) and par_dt>='2018-04'
+and listingid=-1
+)ys where dx in (1,2)) mmv
+--ods.mobilemodelvariable mmv 
+--where months=5 and realname_renren_match =13003
+--and gender_renren_match in(301,202)
+--and listingid=-1 
+) nn
+where flag=1
+)gg )oo
+where flag=1)ii
+on iii.userid=ii.userid
+
+
+--首次有额
+left join [shuffle]
+(
+select 
+userid,
+firstyou,
+credit_bin,
+IdolsNumTencent,
+bill_call_city_top__zero__one_,
+bill_call_city_top__zero__six_,
+realname_renren_match,
+mark
+from
+(
+select 
+userid,
+inserttime as firstyou,
+IdolsNumTencent,
+credit_bin,
+mark,
+realname_renren_match,
+bill_call_city_top__zero__one_,
+bill_call_city_top__zero__six_,
+ROW_NUMBER()over(partition by mmv.userid order by mmv.inserttime asc) as flag
+from 
+ods.mobilemodelvariable mmv 
+where months=55 and realname_renren_match in (23002,23006) and par_dt>='2018-04'
+and IdolsNumTencent>0 and isvalidrenren=1
+) uu
+
+where flag=1 ) jj
+on iii.userid=jj.userid ;
+
+compute stats  appzc.dx_datatable_m_chuo_pre1;
+
+drop table if exists appzc.dx_datatable_m_chuo_pre2;
+create table appzc.dx_datatable_m_chuo_pre2
+  as
+select 
+a.*,
+
+--首次大额发标相关变量
+case when kk.userid is not null then 1 else 0 end as fb_status,
+kk.listingid as first_fb_listingid,
+kk.creationdate as first_fb_time,
+kk.amount as first_fb_amount,
+kk.months as first_fb_month,
+kk.audit_reason as first_fb_reason,
+kk.credit_bin as first_fb_bin,
+kk.bill_call_city_top__zero__six_ as first_fb_testrule,
+datediff(kk.creationdate,first_youe_time) as first_fb_interval,
+
+
+--小额发标相关变量
+--case when kkk.userid is not null then 1 else 0 end as fb_xiao_status,
+--kk.creationdate as first_fb_time,
+--kk.amount as first_fb_amount,
+--kk.months as first_fb_month,
+--kk.audit_reason as first_fb_reason,
+
+
+--大额首次成交相关变量
+case when ll.userid is not null then 1 else 0 end as cj_status,
+ll.listingid as first_cj_listingid,
+ll.auditingdate as first_cj_time,
+ll.amount as first_cj_amount,
+ll.months as first_cj_month,
+ll.credit_bin as first_cj_bin,
+
+
+--新客成交相关变量
+case when lll.userid is not null then 1 else 0 end as allcj_status,
+lll.auditingdate as first_allcj_time,
+lll.amount as first_allcj_amount,
+lll.months as first_allcj_month
+
+from appzc.dx_datatable_m_chuo_pre1  a
+
+--大额首次发标
+left join [shuffle]
+(
+select 
+userid ,
+uu.listingid,
+amount,
+months,
+credit_bin,
+audit_reason,
+bill_call_city_top__zero__six_,
+creationdate
+from
+(
+select 
+borrowerid as userid,
+listingid,
+amount,
+creationdate,
+months,
+ROW_NUMBER()over(partition by l.borrowerid order by l.creationdate asc) as flag
+from 
+ods.listing l 
+where (listtype=100 and sublisttype=2) or (sublisttype=10601 and listtype=106)  
+ or (sublisttype=10602 and listtype=106)
+
+) uu
+left join 
+( 
+select listingid,credit_bin,bill_call_city_top__zero__six_,audit_reason 
+from 
+(select listingid,credit_bin,bill_call_city_top__zero__six_,
+concat(audit_reason,bill_call_city_by_number_top__zero__nine_,bill_call_city_by_number_top__one__zero_) as audit_reason,
+ROW_NUMBER()over(partition by listingid order by inserttime desc) as fl
+ from ods.mobilemodelvariable  where months=55 and realname_renren_match in (23002,23006) and listingid<>-1)mm 
+ where fl=1
+ )mmv
+on uu.listingid=mmv.listingid
+
+where flag=1 ) kk
+on a.chuo_uid=kk.userid
+
+
+
+--大额首次成交
+left join [shuffle]
+(
+select 
+userid ,
+uu.listingid,
+amount,
+months,
+credit_bin,
+auditingdate
+from
+(
+select 
+borrowerid as userid,
+listingid,
+amount,
+months,
+auditingdate,
+ROW_NUMBER()over(partition by l.borrowerid order by l.auditingdate asc) as flag
+from 
+ods.listing l 
+where  (listtype=100 and sublisttype=2) or (sublisttype=10601 and listtype=106)  
+ or (sublisttype=10602 and listtype=106)
+and statusID in (4,12)
+
+
+) uu
+
+left join 
+( 
+select listingid,credit_bin,audit_reason 
+from 
+(select listingid,credit_bin,bill_call_city_top__zero__six_,
+concat(audit_reason,bill_call_city_by_number_top__zero__nine_,bill_call_city_by_number_top__one__zero_) as audit_reason,
+ROW_NUMBER()over(partition by listingid order by inserttime desc) as fl
+ from ods.mobilemodelvariable  where months=55 and realname_renren_match in (23002,23006) and listingid<>-1)mm 
+ where fl=1
+ )mmv
+on uu.listingid=mmv.listingid
+
+
+where flag=1 ) ll
+on a.chuo_uid=ll.userid
+
+--全新客首次成交
+left join [shuffle]
+                (
+                select distinct *
+                from
+                (
+                select 
+                borrowerid as userid,
+                l.listingid,
+                l.amount,
+                l.months,
+                l.creationdate,
+                l.auditingdate
+                --ROW_NUMBER()over(partition by l.borrowerid order by l.auditingdate asc) as flag
+                from 
+                ods.listing l 
+               --inner join [shuffle] ods.mobilemodelvariable mmv
+               --on l.listingid=mmv.listingid
+               --and ((mmv.mark like '%801%') or (mmv.mark like '%802%') or (mmv.mark like '%901%') or (mmv.mark like '%902%') or substr(mmv.mark,1,2) in ('1','2','3','4','5','2.','3.','4.','5.'))
+                where (l.listtype=100 or l.listtype=21  or (sublisttype=10601 and listtype=106)  or (sublisttype=10602 and listtype=106))
+                and l.statusID in (4,12)
+
+                ) uu
+                
+                ) 
+                lll
+on a.userid=lll.userid
+and a.first_chuo_time<lll.auditingdate ;
+
+compute stats  appzc.dx_datatable_m_chuo_pre2;
+
+
+drop table if exists appzc.dx_datatable_m_chuo;
+create table appzc.dx_datatable_m_chuo
+  as
+
+select  iii.*,
+case when   cj.userid is not null then '成交'
+     when   cj.userid is null and fb.userid is not null then '发标未成交'
+     when   youe.userid is not null and fb.userid is null then '有额未发标'
+     when   chuoe.userid is not null and youe.userid is null then '戳额无额度'
+     when   chuoe.userid is null then '纯新'
+     else 'other'  end as first_chuo_usertype
+
+
+from appzc.dx_datatable_m_chuo_pre2 iii
+/* 判断是否成交 */
+left join [shuffle]
+appzc.dx_cj  cj
+on iii.userid=cj.userid and iii.first_chuo_time>cj.auditingdate
+/* 判断是否发标 */
+left join [shuffle]
+appzc.dx_fb fb
+on iii.userid=fb.userid and iii.first_chuo_time>fb.inserttime
+/* 判断是否有额 */
+left join [shuffle]
+appzc.dx_youe youe
+on iii.userid=youe.userid and iii.first_chuo_time>youe.inserttime
+/* 判断是否戳额 */
+left join [shuffle]
+appzc.dx_chuoe chuoe
+on iii.userid=chuoe.userid and iii.first_chuo_time>chuoe.inserttime;
+
+compute stats  appzc.dx_datatable_m_chuo;
+
+drop table if exists appzc.dx_channelmonitor_basicinfo;
+create table appzc.dx_channelmonitor_basicinfo
+as
+
+select 
+sourcename,
+sourcefeature,
+case when sourcefeature rlike '[0-9]' and sourcename not like '%MB%' and sourcename not like '%M站%' then 'app' else 'M' end as sourcetype,
+a.userid,
+to_date(a.first_login_time) as first_login_time,
+a.first_login_usertype,
+chuo_status,
+a.first_chuo_bin,
+youe_status,
+fb_status,
+cj_status,
+allcj_status,
+'APP' as qudao_type
+
+from 
+appzc.dx_datatable_chuo  a
+
+inner join [shuffle]
+appzc.dx_dae_user_det b on a.userid=b.userid
+where log_status=1
+
+union all 
+
+select 
+sourcename,
+sourcefeature,
+case when sourcefeature rlike '[0-9]' and sourcename not like '%MB%' and sourcename not like '%M站%' then 'app' else 'M' end as sourcetype,
+a.userid,
+to_date(a.first_login_time) as first_login_time,
+a.first_login_usertype,
+chuo_status,
+a.first_chuo_bin,
+youe_status,
+fb_status,
+cj_status,
+allcj_status,
+'M' as qudao_type
+
+
+
+from 
+appzc.dx_datatable_m_chuo  a
+
+inner join [shuffle]
+appzc.dx_dae_user_det b on a.userid=b.userid
+
+where first_login_time >='2018-06-28'
+
+;
+   
+
