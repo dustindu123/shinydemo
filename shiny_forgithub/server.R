@@ -40,21 +40,24 @@ channel$first_login_time=as.character(channel$first_login_time)
 
 channeleva=read.table("channeleva.txt",header = TRUE,sep="",fileEncoding="UTF-8",row.names = NULL)
 
-dx1=channeleva[channeleva$qudao_type=="APP",] %>% group_by(sourcename) %>% 
-summarise(chuonum=n()) %>% arrange(desc(chuonum))
+# dx1=channeleva[channeleva$qudao_type=="APP",] %>% group_by(sourcename) %>% 
+# summarise(chuonum=n()) %>% arrange(desc(chuonum))
 
-dx2=channeleva[channeleva$qudao_type=="M",] %>% group_by(sourcename) %>% 
-summarise(chuonum=n()) %>% arrange(desc(chuonum))
+# dx2=channeleva[channeleva$qudao_type=="M",] %>% group_by(sourcename) %>% 
+# summarise(chuonum=n()) %>% arrange(desc(chuonum))
+
+# output$dx <- renderUI({
+    # n=ifelse(input$line7=="APP",dx1$sourcename[dx1$chuonum>200],dx2$sourcename[dx2$chuonum>200])
+    # checkboxGroupInput("spider", 
+                        # h4("渠道选择(戳额数>200的渠道)"), 
+                        # choices =n,
+                        # selected = n[1:3])
+
+# })
 
 output$dx <- renderUI({
-    n=ifelse(input$line7=="APP",dx1$sourcename[dx1$chuonum>200],dx2$sourcename[dx2$chuonum>200])
-    checkboxGroupInput("spider", 
-                        h4("渠道选择(戳额数>200的渠道)"), 
-                        choices =n,
-                        selected = n[1:3])
-
+input$line7
 })
-
 
 
 ceshi=read.table("ceshi.txt",header = TRUE,sep="",fileEncoding="UTF-8",row.names = NULL) ###正确
