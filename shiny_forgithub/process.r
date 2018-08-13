@@ -398,6 +398,26 @@ cleanBasic=function(basic,channel1,channel2) {
     return(basic)
 
 }
+meanPlus=function(x) {
+    x=as.numeric(x[!is.na(x)&x!=-100&x!=-1])
+    index=mean(x,na.rm=TRUE)
+    
+    
+    return(index)
+    
+    }
+medianPlus=function(x) {
+    x=as.numeric(x[!is.na(x)&x!=-100&x!=-1])
+    index=median(x,na.rm=TRUE)
+    
+    
+    return(index)
+    
+    }
+ratioCalculate=function(a,b){
+    a=percent( round((a-b)/b,4))
+    return(a)
+    }
 
 basic=cleanBasic(basic,channel_app,channel_m)
 
@@ -408,6 +428,42 @@ duotou=basic[,c(2,3,6,7,8,9,10,16,17,18,32)]
 zizhi=basic[,c(2,3,6,9,10,19,20,21,32)]
 owing=basic[,c(2,3,6,9,10,22,23,24,32)]
 
+basic1=subset(basic,
+        select=c(biglinetype,linetype,credit_bin,repaybin,risk_score,
+                umeng_score,jdcredit_score,final_score,td_3m,td_1m,
+                boappnum,message_count_default,cmax,omax,vcard,rph,rpo,
+                rpc,query1m,hoverdue2y,ooverdue2y,coverdue2y))
+bi=c()                
+for(i in c(3:ncol(basic1))){
+    bi0=cbind(tapply(basic1[,i],list(basic1$biglinetype,basic1$linetype),meanPlus),names(basic1)[i])
+    bi=rbind(bi,bi0)
+    bi=data.frame(bi)
+    }
+bi1=c()  
+for(i in c(3:ncol(basic1))){
+    bi0=cbind(tapply(basic1[,i],list(basic1$biglinetype,basic1$linetype),medianPlus),names(basic1)[i])
+    bi1=rbind(bi1,bi0)
+    bi1=data.frame(bi1)
+    }
+app_line= as.numeric(as.character(bi$大额主营[!is.na(bi$大额主营)]))
+m_line= as.numeric(as.character(bi$小额_m[!is.na(bi$小额_m)]))
+
+app_line1= as.numeric(as.character(bi1$大额主营[!is.na(bi1$大额主营)]))
+m_line1= as.numeric(as.character(bi1$小额_m[!is.na(bi1$小额_m)]))
+m_line1=append(m_line1,NA,0)
+
+basic1=data.frame(app_line,m_line,app_line1,m_line1)
+
+basic1[4,]=-basic1[4,]
+basic1[5,]=-basic1[5,]
+basic1[11,]=-basic1[11,]
+basic1[12,]=-basic1[12,]
+basic1[13,]=-basic1[13,]
+basic1$app=app_line
+basic1$m=m_line
+
+basic1$app1=app_line1
+basic1$m1=m_line1
 
 ##
 write.table(channel,"D:/shinydemo/shiny_forgithub/channel.txt",quote=FALSE,row.names=FALSE,fileEncoding = "UTF-8") ##地址可更改 
@@ -420,6 +476,7 @@ write.table(score,"D:/shinydemo/shiny_forgithub/score.txt",quote=FALSE,row.names
 ##
 #write.table(channeleva2,"D:/shinydemo/shiny_forgithub/channeleva2.txt",quote=FALSE,row.names=FALSE,fileEncoding = "UTF-8") ##地址可更改 
 ##
+write.table(basic1,"D:/shinydemo/shiny_forgithub/bas.txt",quote=FALSE,row.names=FALSE,fileEncoding = "UTF-8") ##地址可更改 
 
 write.table(basicinfo,"D:/shinydemo/shiny_forgithub/basicinfo.txt",quote=FALSE,row.names=FALSE,fileEncoding = "UTF-8") ##地址可更改 
 write.table(model,"D:/shinydemo/shiny_forgithub/model.txt",quote=FALSE,row.names=FALSE,fileEncoding = "UTF-8") ##地址可更改   

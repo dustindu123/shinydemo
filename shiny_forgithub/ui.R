@@ -5,6 +5,7 @@ library(DT)
 library(dplyr)
 library(shinydashboard)
 library(rCharts)
+library(formattable)
 ####
 basic=read.table("basicinfo.txt",header = TRUE,sep="",fileEncoding="UTF-8") ###正确
 basic$firstchuo=as.character(basic$firstchuo)
@@ -262,7 +263,8 @@ tabItems(
           box(dataTableOutput("rate1"),width = 12),
           box(dataTableOutput("rate2"),width = 12),
           box(dataTableOutput("rate3"),width = 12),
-          box(dataTableOutput("rate5"),width = 12)
+          box(dataTableOutput("rate5"),width = 12),
+          box(dataTableOutput("rate4"),width=12)
         )
       
       ),
@@ -311,8 +313,10 @@ tabItems(
 ##
           box(selectInput('basic4',h3('逾期数据'), c("overdue message count","credit report overdue_2y")),width = 12),
           box(showOutput("plot65","highcharts")) ,
-          box(plotOutput("sp5")),
-          box(dataTableOutput("rate4"),width=12)
+          box(plotOutput("sp5"))
+          #box(dataTableOutput("rate4"),width=12)
+          #box(formattableOutput("formattableexample1")),
+          #box(formattableOutput("formattableexample2"))
           )
       ),
       tabItem("M站推广渠道", "渠道质量监控 tab content")

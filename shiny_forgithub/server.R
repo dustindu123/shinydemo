@@ -10,6 +10,7 @@ library(ggplot2)
 library(ggthemes)
 library(ggradar)
 library(scales)
+library(formattable)
 
 
 shinyServer(function(input,output){
@@ -39,6 +40,9 @@ channel$first_login_time=as.character(channel$first_login_time)
 # channel2$first_login_time=as.character(channel2$first_login_time)
 
 channeleva=read.table("channeleva.txt",header = TRUE,sep="",fileEncoding="UTF-8",row.names = NULL)
+
+
+bi=read.table("bas.txt",header = TRUE,sep="",fileEncoding="UTF-8",row.names = NULL)
 
 # dx1=channeleva[channeleva$qudao_type=="APP",] %>% group_by(sourcename) %>% 
 # summarise(chuonum=n()) %>% arrange(desc(chuonum))
@@ -1346,10 +1350,10 @@ bo=selectedData7()[selectedData7()$qudao_type=="APP",]
 bo$channel_category[is.na(bo$channel_category)]="其他大额渠道类型"
 m=bo %>% group_by(channel_category) %>% 
 summarise(num=n(),chuonum=sum(chuo_status),younum=sum(youe_status),
-chuoratio=round(sum(chuo_status)/n(),2),
-youratio=round(ifelse(sum(chuo_status)>0,sum(youe_status)/sum(chuo_status),0),2),
-fbratio=round(ifelse(sum(youe_status)>0,sum(fb_status)/sum(youe_status),0),2),
-zhratio=round(sum(cj_status)/n(),2),
+chuoratio=round(sum(chuo_status)/n(),4),
+youratio=round(ifelse(sum(chuo_status)>0,sum(youe_status)/sum(chuo_status),0),4),
+fbratio=round(ifelse(sum(youe_status)>0,sum(fb_status)/sum(youe_status),0),4),
+zhratio=round(sum(cj_status)/n(),4),
 allzhratio=round(sum(allcj_status)/n(),2)) 
 names(m)=c("渠道类型","登录大额人数","戳额数","有额数","戳额率","有额率","确认率","大额转化率","整体转化率")
 #return(m)
@@ -1363,10 +1367,10 @@ bo=selectedData7()[selectedData7()$qudao_type=="M",]
 bo$channel_category[is.na(bo$channel_category)]="其他大额渠道类型"
 m=bo %>% group_by(channel_category) %>% 
 summarise(num=n(),chuonum=sum(chuo_status),younum=sum(youe_status),
-chuoratio=round(sum(chuo_status)/n(),2),
-youratio=round(ifelse(sum(chuo_status)>0,sum(youe_status)/sum(chuo_status),0),2),
-fbratio=round(ifelse(sum(youe_status)>0,sum(fb_status)/sum(youe_status),0),2),
-zhratio=round(sum(cj_status)/n(),2),
+chuoratio=round(sum(chuo_status)/n(),4),
+youratio=round(ifelse(sum(chuo_status)>0,sum(youe_status)/sum(chuo_status),0),4),
+fbratio=round(ifelse(sum(youe_status)>0,sum(fb_status)/sum(youe_status),0),4),
+zhratio=round(sum(cj_status)/n(),4),
 allzhratio=round(sum(allcj_status)/n(),2)) 
 names(m)=c("渠道类型","登录大额人数","戳额数","有额数","戳额率","有额率","确认率","大额转化率","整体转化率")
 #return(m)
@@ -1611,6 +1615,105 @@ output$sp6<-renderPlot({
       rada=ggradar(mm6,axis.label.size = 7,legend.text.size = 16)
   return(rada)  
 })
+####################################################################################
+meanPlus=function(x) {
+    x=as.numeric(x[!is.na(x)&x!=-100&x!=-1])
+    index=mean(x,na.rm=TRUE)
+    
+    
+    return(index)
+    
+    }
+medianPlus=function(x) {
+    x=as.numeric(x[!is.na(x)&x!=-100&x!=-1])
+    index=median(x,na.rm=TRUE)
+    
+    
+    return(index)
+    
+    }
+ratioCalculate=function(a,b){
+    a=percent( round((a-b)/b,4))
+    return(a)
+    }
+    
+#######主营数据
+   
+
+
+########
+    
+splitData=function(channeleva,a){
+    channeleva1=channeleva
+    channeleva1$channel_category=as.character(channeleva1$channel_category)
+
+    channeleva1$channel_category[channeleva1$sourcename=="资产大额M站分销联盟"]="分销联盟"
+    
+    app=channeleva1[channeleva1$qudao_type==a,]
+    app=subset(app,select=c(channel_category,credit_bin,repaybin,risk_score,umeng_score,jdcredit_score,final_score,td_3m,td_1m,boappnum,message_count_default,cmax,omax,vcard,rph,rpo,rpc,query1m,hoverdue2y,ooverdue2y,coverdue2y))
+    app$channel_category[is.na(app$channel_category)]=="其他渠道类型"
+    app1=apply(app[,-1],2,function(x)tapply(x,app$channel_category,meanPlus)) 
+    app2=apply(app[,-1],2,function(x)tapply(x,app$channel_category,medianPlus)) 
+    
+    app1=data.frame(t(app1)) 
+    app1$name=row.names(app1)
+    row.names(app1)=1:nrow(app1)
+    app1=app1[,c(4,1:3)]
+    
+    app2=data.frame(t(app2)) 
+    app2$name=row.names(app2) 
+    row.names(app2)=1:nrow(app2)
+    app2=app2[,c(4,1:3)]
+    
+    rm(channeleva1)
+    return(list(app1,app2))
+    }
+
+dimChange=function(basic1,a){
+    n=a:ncol(basic1)
+    basic1[4,n]=-basic1[4,n]
+    basic1[5,n]=-basic1[5,n]
+    basic1[11,n]=-basic1[11,n]
+    basic1[12,n]=-basic1[12,n]
+    basic1[13,n]=-basic1[13,n]
+    return(basic1)
+    }
+tot=splitData(channeleva,"APP")
+
+  output$formattableexample1 <- renderFormattable({
+      df=data.frame(tot[1])
+      df=dimChange(df,2)
+      df$大额主营=round(bi$app_line,4)
+      df=df[,c(1,5,2,3,4)]
+      for (i in 3:ncol(df)){
+        df[,i]= ratioCalculate(df[,i],df$大额主营)
+        }
+      df$大额主营=round(bi$app,4)
+      formattable(df, list(
+        APP贷超 = color_tile("white", "red"),
+        APP信息流 = color_tile("white", "red"),
+        M站信息流 = color_tile("white", "red")
+      ))
+    })
+  
+      
+  output$formattableexample2 <- renderFormattable({
+      df=data.frame(tot[2])
+      df=dimChange(df,2)
+      df$大额主营=round(bi$app_line1,4)
+      df=df[,c(1,5,2,3,4)]
+      for (i in 3:ncol(df)){
+        df[,i]= ratioCalculate(df[,i],df$大额主营)
+        } 
+      df$大额主营=round(bi$app1,4)
+
+      formattable(df, list(
+        APP贷超 = color_tile("white", "red"),
+        APP信息流 = color_tile("white", "red"),
+        M站信息流 = color_tile("white", "red")
+      ))
+  })
+
 
 ####################################################################################
 })
