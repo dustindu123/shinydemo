@@ -313,10 +313,13 @@ getScore=function(channel,basic,n,index){
     num=n())
     score[score=="NaN"]=0
     score$qudao_type=toupper(index)
-    
+    if(index=="app"){score=merge(score,ch_app,"sourcename",all.x = T)}
+    if(index=="M"){score=merge(score,ch_m,"sourcename",all.x = T)}
     return(score)
     }
 
+    
+#############################
 ########执行上面的函数
 
 channeleva1=getMerge(channel_app,basic)
@@ -336,6 +339,10 @@ score2=getScore(channel_m,basic,66,"M")
 
 ceshi=rbind(ceshi1,ceshi2)
 score=rbind(score1,score2)
+
+score$channel_category[score$sourcename=="资产大额M站分销联盟"]="M站分销联盟"
+score$channel_category[is.na(score$channel_category)&score$qudao_type=="APP"]="APP其他类型渠道"
+score$channel_category[is.na(score$channel_category)&score$qudao_type=="M"]="M站其他类型渠道"
 
 
 #score[score=="NaN"]=0

@@ -260,11 +260,12 @@ tabItems(
                format = "yyyy-mm-dd"),width = 12
                ),
           box(selectInput('line6',h3('筛选业务线'), c("APP","M")),width = 12),
+          box(dataTableOutput("rate6"),width=12),
+          box(dataTableOutput("rate4"),width=12),
           box(dataTableOutput("rate1"),width = 12),
           box(dataTableOutput("rate2"),width = 12),
           box(dataTableOutput("rate3"),width = 12),
-          box(dataTableOutput("rate5"),width = 12),
-          box(dataTableOutput("rate4"),width=12)
+          box(dataTableOutput("rate5"),width = 12)
         )
       
       ),

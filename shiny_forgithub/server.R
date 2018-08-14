@@ -1409,7 +1409,7 @@ datatable(m,caption = '各类型渠道在M站的转化数据')
   })
   
 output$rate4 = renderDataTable({
-score=score[score$qudao_type==input$line7,]
+score=score[score$qudao_type==input$line6,]
 
 score=score %>% group_by(sourcename) %>%
       summarise(
@@ -1425,6 +1425,68 @@ score_mat$total=round((score_mat$basicinfo+score_mat$model*3+score_mat$asset*2+s
 names(score_mat)=c("渠道名称","戳额人数","基本信息维度得分","模型维度","资产信息维度","多头信息维度","逾期信息维度","综合得分")
 #return(m)
 datatable(score_mat,caption = '渠道各维度评分展示')
+
+})
+
+output$rate6 = renderDataTable({
+score=score[score$qudao_type==input$line6,]
+
+score=score %>% 
+    transmute(
+    channel_category,
+    num=num,
+    edu=edu*num,
+    city=city*num,
+    usertype=usertype*num,
+    bin=bin*num,
+    rbin=rbin*num,
+    tengxun=tengxun*num,
+    umeng=umeng*num,
+    jd=jd*num,
+    max_creditcard=max_creditcard*num,
+    max_otherloan=max_otherloan*num,
+    salary=salary*num,
+    boapp=boapp*num,
+    tongdun=tongdun*num,
+    zx_query=zx_query*num,
+    ovd_msg=ovd_msg*num,
+    overdue_zx=overdue_zx*num)
+
+score=score %>% group_by(channel_category) %>%  
+    summarise(
+    num=sum(num),
+    edu=sum(edu)/sum(num),
+    city=sum(city)/sum(num),
+    usertype=sum(usertype)/sum(num),
+    bin=sum(bin)/sum(num),
+    rbin=sum(rbin)/sum(num),
+    tengxun=sum(tengxun)/sum(num),
+    umeng=sum(umeng)/sum(num),
+    jd=sum(jd)/sum(num),
+    max_creditcard=sum(max_creditcard)/sum(num),
+    max_otherloan=sum(max_otherloan)/sum(num),
+    salary=sum(salary)/sum(num),
+    boapp=sum(boapp)/sum(num),
+    tongdun=sum(tongdun)/sum(num),
+    zx_query=sum(zx_query)/sum(num),
+    ovd_msg=sum(ovd_msg)/sum(num),
+    overdue_zx=sum(overdue_zx)/sum(num) )    
+
+score=score %>% group_by(channel_category) %>%
+      summarise(
+      chuonum=sum(num),
+      basicinfo=edu+city+usertype,
+      model=(bin*2+rbin*2+tengxun*1+umeng*1+jd)/7,
+      asset=salary+max_creditcard+max_otherloan,
+      multiloan=boapp+tongdun+zx_query,
+      ovd=ovd_msg+overdue_zx )
+
+#score_mat=data.frame(sourcename=score$channel_category,chuonum=score$chuonum,basicinfo=round(score$basicinfo,2),model=round(score$model,2),asset=round(score$asset,2),multiloan=round(score$multiloan,2),ovd=round(score$ovd,2))
+score_mat=data.frame(sourcename=score$channel_category,chuonum=score$chuonum,basicinfo=rank(score$basicinfo),model=rank(score$model),asset=rank(score$asset),multiloan=rank(score$multiloan),ovd=rank(score$ovd))
+score_mat$total=round((score_mat$basicinfo+score_mat$model*5+score_mat$asset*1+score_mat$multiloan*1+score_mat$ovd*2))
+names(score_mat)=c("渠道名称","戳额人数","基本信息维度得分","模型维度","资产信息维度","多头信息维度","逾期信息维度","综合得分")
+#return(m)
+datatable(score_mat,caption = '区分大类看各维度评分展示')
 
 })
 
