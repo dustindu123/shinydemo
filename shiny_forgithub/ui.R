@@ -6,6 +6,7 @@ library(dplyr)
 library(shinydashboard)
 library(rCharts)
 library(formattable)
+library(markdown)
 ####
 basic=read.table("basicinfo.txt",header = TRUE,sep="",fileEncoding="UTF-8") ###正确
 basic$firstchuo=as.character(basic$firstchuo)
@@ -320,7 +321,12 @@ tabItems(
           #box(formattableOutput("formattableexample2"))
           )
       ),
-      tabItem("M站推广渠道", "渠道质量监控 tab content")
+      tabItem("M站推广渠道"
+      #fluidRow(
+      #column(12,includeHTML("final.html")))
+      
+      
+      )
   )
  )
 )
